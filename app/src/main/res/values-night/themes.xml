@@ -2,8 +2,8 @@
     <!-- Base application theme. -->
     <style name="Theme.GoodMask" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#757575</item>
-        <item name="colorPrimaryVariant">#0B0B0B</item>
+        <item name="colorPrimary">#FFC063</item>
+        <item name="colorPrimaryVariant">#686868</item>
         <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>

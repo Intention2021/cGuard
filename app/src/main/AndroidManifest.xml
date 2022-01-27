@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.MainActivity"/>
-        <activity android:name=".activity.DeviceActivity"/>
+        z<activity android:name=".activity.DeviceActivity"/>
 
     </application>
 

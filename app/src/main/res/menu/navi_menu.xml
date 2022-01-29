@@ -4,7 +4,7 @@
         android:id="@+id/frag_homeground"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_home_24"
-        android:title="마스크"/>
+        android:title="홈"/>
 
     <item
         android:id="@+id/frag_stat"

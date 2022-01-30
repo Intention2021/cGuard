@@ -4,7 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/selector_bg.xml" value="0.12685185185185185" />
+        <entry key="app/src/main/res/layout/activity_device.xml" value="0.12426900584795321" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_splash.xml" value="0.12426900584795321" />
         <entry key="app/src/main/res/layout/frag_home.xml" value="0.1" />
         <entry key="app/src/main/res/layout/frag_mask.xml" value="0.1" />
         <entry key="app/src/main/res/layout/frag_notification.xml" value="0.18721607262333617" />

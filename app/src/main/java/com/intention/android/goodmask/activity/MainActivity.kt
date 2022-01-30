@@ -11,7 +11,7 @@ import com.intention.android.goodmask.fragment.NotificationFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
     val notificationFragment = NotificationFragment()
@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // fragment 변경
-    private fun replaceFragment(fragment: Fragment) {
+    public fun replaceFragment(fragment: Fragment) {
         val tran = supportFragmentManager.beginTransaction()
         tran.replace(R.id.fl_container, fragment)
         tran.commit()

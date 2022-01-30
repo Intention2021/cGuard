@@ -3,27 +3,23 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="app/src/main/res/drawable/ic_baseline_bar_chart_24.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/ic_baseline_bar_chart_clicked.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/ic_baseline_home_24.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/ic_baseline_home_clicked.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/ic_baseline_notifications_24.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/rounded_orange_btn.xml" value="0.3578125" />
-        <entry key="app/src/main/res/drawable/rounded_white_btn.xml" value="0.26197916666666665" />
-        <entry key="app/src/main/res/font/font_custom.xml" value="0.27395833333333336" />
-        <entry key="app/src/main/res/layout/activity_device.xml" value="0.20516304347826086" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/activity_splash.xml" value="0.20516304347826086" />
-        <entry key="app/src/main/res/layout/frag_home.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/frag_mask.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/frag_notification.xml" value="0.20516304347826086" />
-        <entry key="app/src/main/res/layout/frag_statics.xml" value="0.33" />
-        <entry key="app/src/main/res/menu/navi_menu.xml" value="0.3421875" />
-        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1421875" />
+        <entry key="app/src/main/res/drawable/selector_bg.xml" value="0.12685185185185185" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/frag_home.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/frag_mask.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/frag_notification.xml" value="0.18721607262333617" />
+        <entry key="app/src/main/res/layout/frag_statics.xml" value="0.17584875844943312" />
+        <entry key="app/src/main/res/layout/notification_item_layout.xml" value="0.2223731884057971" />
       </map>
     </option>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK" />
+  <component name="VisualizationToolProject">
+    <option name="state">
+      <ProjectState>
+        <option name="scale" value="0.1" />
+      </ProjectState>
+    </option>
+  </component>
 </project>

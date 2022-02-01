@@ -16,16 +16,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:elevation="3dp"
             android:layout_marginBottom="16dp"
             android:layout_weight="1"
             android:background="@drawable/rounded_white_btn"
             app:layout_constraintBottom_toTopOf="@+id/layoutBattery">
 
             <TextView
+                android:textColor="@color/black"
                 android:id="@+id/maskInfoTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
+                android:textStyle="bold"
+                android:textSize="18dp"
                 android:gravity="center_horizontal"
                 android:text="마스크 정보"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -34,6 +40,7 @@
 
             <View
                 android:id="@+id/infoView"
+                android:layout_marginTop="12dp"
                 android:layout_width="60dp"
                 android:layout_height="2dp"
                 android:background="#FFC063"
@@ -58,6 +65,9 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutBattery"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="18dp"
+            android:elevation="3dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -69,6 +79,9 @@
                 android:id="@+id/batteryText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="18dp"
                 android:layout_marginTop="16dp"
                 android:gravity="center_horizontal"
                 android:text="베터리 잔량"
@@ -78,7 +91,8 @@
 
             <View
                 android:id="@+id/batteryView"
-                android:layout_width="60dp"
+                android:layout_width="36dp"
+                android:layout_marginTop="12dp"
                 android:layout_height="2dp"
                 android:background="#FFC063"
                 android:foregroundGravity="center_horizontal"
@@ -104,8 +118,11 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutFilter"
             android:layout_width="match_parent"
+            android:elevation="3dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="18dp"
+            android:layout_marginBottom="12dp"
             android:layout_weight="1"
             android:background="@drawable/rounded_white_btn"
             app:layout_constraintBottom_toTopOf="@+id/layoutSeek"
@@ -115,6 +132,9 @@
                 android:id="@+id/filterText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:textSize="18dp"
                 android:layout_marginTop="16dp"
                 android:gravity="center_horizontal"
                 android:text="필터 교체"
@@ -124,7 +144,8 @@
 
             <View
                 android:id="@+id/filterView"
-                android:layout_width="50dp"
+                android:layout_width="36dp"
+                android:layout_marginTop="12dp"
                 android:layout_height="2dp"
                 android:background="#FFC063"
                 android:foregroundGravity="center_horizontal"
@@ -148,8 +169,11 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutSeek"
             android:layout_width="match_parent"
+            android:elevation="3dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginRight="18dp"
+            android:layout_marginLeft="18dp"
+            android:layout_marginBottom="12dp"
             android:layout_weight="1"
             android:background="@drawable/rounded_white_btn"
             app:layout_constraintBottom_toTopOf="@+id/disconnectBtn">
@@ -158,23 +182,16 @@
                 android:id="@+id/fanTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="24dp"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:textSize="24dp"
                 android:gravity="center_horizontal"
-                android:text="팬 세기"
+                android:text="팬 세기\n0"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <View
-                android:id="@+id/view2"
-                android:layout_width="60dp"
-                android:layout_height="2dp"
-                android:background="#FFC063"
-                android:foregroundGravity="center_horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/fanTitle" />
 
             <SeekBar
                 android:id="@+id/seekBar"
@@ -183,6 +200,7 @@
                 android:layout_height="50dp"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="12dp"
+                android:layout_marginBottom="24dp"
                 android:foregroundGravity="center_horizontal"
                 android:max="10"
                 android:progress="0"
@@ -203,8 +221,11 @@
                 android:id="@+id/disconnectBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="18dp"
+                android:layout_marginEnd="18dp"
                 android:background="@drawable/rounded_orange_btn"
                 android:text="기기 연결 해제"
+                android:textSize="18dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"

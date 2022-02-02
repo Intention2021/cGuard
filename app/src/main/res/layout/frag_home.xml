@@ -21,13 +21,15 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
+        android:id="@+id/refreshBtn"
         android:layout_width="24dp"
         android:elevation="3dp"
         android:layout_height="24dp"
         android:clickable="true"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="24dp"
-        android:background="@drawable/refresh"
+        android:src="@drawable/refresh"
+        android:background="?attr/selectableItemBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -77,13 +79,13 @@
                 app:layout_constraintTop_toBottomOf="@+id/location" />
 
             <TextView
-                android:id="@+id/textView5"
+                android:id="@+id/locationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/white"
                 android:layout_marginTop="12dp"
                 android:gravity="center_horizontal"
-                android:text="서울시  은평구 진관동"
+                android:text="서울시 중구 명동"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.502"
@@ -129,7 +131,7 @@
                 app:layout_constraintBottom_toTopOf="@+id/dust2"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView5" />
+                app:layout_constraintTop_toBottomOf="@+id/locationText" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -10,6 +10,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -23,6 +25,9 @@ class HomeFragment : Fragment() {
     private var _binding: FragHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    lateinit var maskFanPower : SeekBar
+    lateinit var maskFanPowerText : TextView
+
     var addressList: List<String> = listOf("서울시", "중구", "명동")
 
     override fun onCreateView(
@@ -33,6 +38,18 @@ class HomeFragment : Fragment() {
         _binding = FragHomeBinding.inflate(inflater, container, false)
         val view = binding.root
         var address = arguments?.getString("address")
+
+        maskFanPower = binding.seekBar
+        maskFanPowerText = binding.fanTitle
+
+        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                maskFanPowerText.text = "팬 세기\n"+p1.toString()
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(p0: SeekBar?) {}
+        })
+
         // Log.d("homeFrag", address.toString())
         binding.locationText.text = address
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())

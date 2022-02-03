@@ -29,7 +29,7 @@ class MaskFragment : Fragment() {
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                maskFanPowerText.text = "팬 세기\n"+p1.toString()
+                maskFanPowerText.text = "팬 세기\n" + p1.toString()
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}

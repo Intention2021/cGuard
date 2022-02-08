@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
                     locationRequest.priority =
                         com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
                     // 10분마다 좌표 갱신
-                    locationRequest.interval = 2 * 1000
+                    // locationRequest.interval = 600 * 1000
                     fusedLocationClient.requestLocationUpdates(
                         locationRequest,
                         locationCallback,
@@ -134,14 +134,14 @@ class MainActivity : AppCompatActivity() {
                         Log.d("first enter changed", "$first")
                     }
                     // 주소가 바뀌었을 때 다시 홈 화면으로 이동(미세먼지와 필터를 다시 확인할 수 있게끔)
-                    else {
+                    /*else {
                         if(changedAddress != addressInfo) {
                             Toast.makeText(this@MainActivity, "현재 위치가 변경되었습니다.", Toast.LENGTH_SHORT)
                                 .show()
                             dataToFragHome(addressInfo)
                             replaceFragment(homeFragment)
                         }
-                    }
+                    }*/
                 }
             }
         }

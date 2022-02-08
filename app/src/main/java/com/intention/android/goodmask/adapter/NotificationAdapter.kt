@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.activity.MainActivity
 import com.intention.android.goodmask.fragment.HomeFragment
+import com.intention.android.goodmask.fragment.MaskFragment
 import com.intention.android.goodmask.model.NoticeData
 
 class NotificationAdapter(
@@ -37,8 +38,8 @@ class NotificationAdapter(
                 canvas.background = ContextCompat.getDrawable(context, R.drawable.selector_bg)
 
                 val main = activity as MainActivity
-                main.binding.bnvMain.selectedItemId = R.id.frag_homeground
-                main.replaceFragment(HomeFragment())
+                main.binding.bnvMain.selectedItemId = R.id.frag_masks
+                main.replaceFragment(MaskFragment())
             }
         }
     }

@@ -18,7 +18,18 @@ import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.intention.android.goodmask.databinding.FragHomeBinding
+import org.locationtech.proj4j.CRSFactory
+import org.locationtech.proj4j.CoordinateTransformFactory
+import org.locationtech.proj4j.proj.Projection
 import java.util.*
+import org.locationtech.proj4j.ProjCoordinate
+
+import org.locationtech.proj4j.BasicCoordinateTransform
+
+import org.locationtech.proj4j.CoordinateReferenceSystem
+
+
+
 
 class HomeFragment : Fragment() {
     private var _binding: FragHomeBinding? = null
@@ -41,6 +52,7 @@ class HomeFragment : Fragment() {
 
         maskFanPower = binding.seekBar
         maskFanPowerText = binding.fanTitle
+        setWGS84TM(37.611041996339054, 126.99718085821137)
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -92,6 +104,25 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun setWGS84TM(lon:Double, lat:Double): ProjCoordinate? {
+        Log.d("TMchanger",lon.toString() + "," + lat.toString())
+
+        val factory = CRSFactory()
+        val grs80 = factory.createFromName("EPSG:4326")
+        val wgs84 = factory.createFromName(
+            "EPSG:5179"
+        )
+
+        val transformer = BasicCoordinateTransform(grs80, wgs84)
+
+        val beforeCoord = ProjCoordinate(lon, lat)
+        val afterCoord = ProjCoordinate()
+
+        Log.d("TMchanger",transformer.transform(beforeCoord, afterCoord).toString())
+
+        return transformer.transform(beforeCoord, afterCoord)
     }
 }
 

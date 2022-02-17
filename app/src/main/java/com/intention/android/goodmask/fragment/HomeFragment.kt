@@ -147,12 +147,12 @@ class HomeFragment : Fragment() {
         val factory = CRSFactory()
         val grs80 = factory.createFromName("EPSG:4326")
         val wgs84 = factory.createFromParameters(
-            "EPSG:5179",
-            "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+            "goodmask",
+            "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"
         )
 
         val transformer = BasicCoordinateTransform(grs80, wgs84)
-        val beforeCoord = ProjCoordinate(lat, lon)
+        val beforeCoord = ProjCoordinate(lon, lat)
         val afterCoord = ProjCoordinate()
 
         Log.d("TMchanger", transformer.transform(beforeCoord, afterCoord).toString())

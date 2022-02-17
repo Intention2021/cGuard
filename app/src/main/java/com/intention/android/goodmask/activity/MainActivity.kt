@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     geocoder = Geocoder(this, Locale.KOREA)
-                   // 위치 좌표 구하
+                   // 위치 좌표 구하기
                     val locationRequest =
                         com.google.android.gms.location.LocationRequest.create()
                     locationRequest.priority =
@@ -123,33 +123,18 @@ class MainActivity : AppCompatActivity() {
                     }
                     addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
                     Log.d("Test", addressInfo)
-
-                    if (first) {
-                        Log.d("first enter", "$first")
-                        changedAddress = addressInfo
-                        Log.d("first address", changedAddress)
-                        dataToFragHome(addressInfo)
-                        replaceFragment(homeFragment)
-                        first = false
-                        Log.d("first enter changed", "$first")
-                    }
-                    // 주소가 바뀌었을 때 다시 홈 화면으로 이동(미세먼지와 필터를 다시 확인할 수 있게끔)
-                    /*else {
-                        if(changedAddress != addressInfo) {
-                            Toast.makeText(this@MainActivity, "현재 위치가 변경되었습니다.", Toast.LENGTH_SHORT)
-                                .show()
-                            dataToFragHome(addressInfo)
-                            replaceFragment(homeFragment)
-                        }
-                    }*/
+                    dataToFragHome(latitude, longtitude, addressInfo)
+                    replaceFragment(homeFragment)
                 }
             }
         }
     }
 
     // homeFragment로 데이터 전달
-    private fun dataToFragHome(addressInfo: String) {
+    private fun dataToFragHome(lat: Double, long: Double, addressInfo: String) {
         var bundle = Bundle()
+        bundle.putDouble("latitude", lat)
+        bundle.putDouble("longitude", long)
         bundle.putString("address", addressInfo)
         homeFragment.arguments = bundle
     }

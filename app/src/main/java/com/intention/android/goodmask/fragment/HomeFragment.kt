@@ -17,6 +17,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.stationData.StationInfo
@@ -178,6 +179,7 @@ class HomeFragment : Fragment() {
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
                         binding.dust.text = "미세먼지 치수: $dustNum"
+                        setDustUI(dustNum!!.toInt())
                     }
                     // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근
                     else {
@@ -188,6 +190,7 @@ class HomeFragment : Fragment() {
                                     val subDustNum = subDustList?.get(0)?.pm10Value
                                     Log.d("Sub Dust Num", "미세먼지 농도: $subDustNum, 측정소는 $subStation")
                                     binding.dust.text = "미세먼지 치수: $subDustNum"
+                                    setDustUI(subDustNum!!.toInt())
                                 }
 
                                 override fun onFailure(call: Call<DustInfo>, t: Throwable) {
@@ -201,6 +204,35 @@ class HomeFragment : Fragment() {
                     Log.d("onFailure in Dust", t.message!!)
                 }
             })
+    }
+
+    // 미세먼지 수치에 따른 UI
+    private fun setDustUI(dust: Int) = when (dust) {
+        in 0..15 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.smile)
+            binding.dust2.text = "매우 좋음"
+        }
+        in 16..30 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_green)
+            binding.imageView2.setBackgroundResource(R.drawable.smile)
+            binding.dust2.text = "좋음"
+        }
+        in 31..80 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_yellow_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.sceptic)
+            binding.dust2.text = "보통"
+        }
+        in 81..150 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_orange_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.bad)
+            binding.dust2.text = "나쁨"
+        }
+        else -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_red_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.angry)
+            binding.dust2.text = "매우 나쁨"
+        }
     }
 }
 

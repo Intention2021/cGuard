@@ -15,8 +15,12 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragHomeBinding
+import com.intention.android.goodmask.dustData.DustInfo
+import com.intention.android.goodmask.stationData.StationInfo
 import org.locationtech.proj4j.CRSFactory
 import java.util.*
 import org.locationtech.proj4j.ProjCoordinate
@@ -52,9 +56,7 @@ class HomeFragment : Fragment() {
         maskFanPower = binding.seekBar
         maskFanPowerText = binding.fanTitle
         val (tmX, tmY) = setWGS84TM(lat!!, long!!)
-        // 구파발
-        // val tmX = 192321.484115
-        // val tmY = 458993.467457
+
         Log.d("TM_XY", "$tmX / $tmY")
 
         val gson = GsonBuilder().setLenient().create()
@@ -64,23 +66,7 @@ class HomeFragment : Fragment() {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
-        val service: StationService? = retrofit.create(StationService::class.java)
-        val key = "reoV++nM+7IsY4GLfsMfFBjKc/0t6gmgytKyqzrR7DbEaCNasNyCT131Qk2yPuPeC5uQqcHFlt4nWQLhDsnWDw=="
-        service?.getInfo(key, "json", tmX, tmY)
-            ?.enqueue(object : Callback<com.intention.android.goodmask.stationData.StationInfo> {
-                override fun onResponse(call: Call<com.intention.android.goodmask.stationData.StationInfo>, response: Response<com.intention.android.goodmask.stationData.StationInfo>) {
-                    val list = response.body()?.response?.body?.items
-                    val nearestStationAddress = list?.get(0)?.addr
-                    val nearestStationName = list?.get(0)?.stationName
-                    Log.d("JSON Test", "가장 가까운 측정소 주소는 $nearestStationAddress, 지역은 $nearestStationName 입니다.")
-                }
-
-                override fun onFailure(call: Call<com.intention.android.goodmask.stationData.StationInfo>, t: Throwable) {
-                    Log.d("onFailure", t.message!!)
-                }
-
-            })
-
+        getDustInfo(retrofit, tmX, tmY)
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -95,43 +81,37 @@ class HomeFragment : Fragment() {
         binding.locationText.text = address
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         binding.refreshBtn.setOnClickListener {
-            getNewLocation()
+            getNewLocation(retrofit)
         }
         return view
     }
 
-    public fun getNewLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            == PackageManager.PERMISSION_GRANTED
-        ) {
+    // 새로고침 시 새 주소 출력
+    private fun getNewLocation(retrofit: Retrofit) {
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
-                    var geocoder = Geocoder(requireContext(), Locale.KOREA)
-                    // Log.d("현재 위치 ", "${location.latitude} / ${location.longitude}")
-                    addressInfo = getNewAddress(geocoder, location!!)
+                    val geocoder = Geocoder(requireContext(), Locale.KOREA)
+                    addressInfo = getNewAddress(geocoder, location!!, retrofit)
                     binding.locationText.text = addressInfo
                     Log.d("Clicked refresh button ", addressInfo)
                 }
         }
-
     }
 
-    private fun getNewAddress(geocoder: Geocoder, location: Location): String {
-        val addrList =
-            geocoder.getFromLocation(location.latitude, location.longitude, 1)
+    // 새 좌표를 이용해 주소 반환
+    private fun getNewAddress(geocoder: Geocoder, location: Location, retrofit: Retrofit): String {
+        val addrList = geocoder.getFromLocation(location.latitude, location.longitude, 1)
         for (addr in addrList) {
             val splitedAddr = addr.getAddressLine(0).split(" ")
             addressList = splitedAddr
         }
         addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
+        // 새 좌표를 다시 TM좌표로 변환 후 미세먼지 치수 다시 가져오기
+        val (newTMX, newTMY) = setWGS84TM(location.latitude, location.longitude)
+        getDustInfo(retrofit, newTMX, newTMY)
+        Log.d("New Information", "$newTMX / $newTMY")
 
         return addressInfo
     }
@@ -141,6 +121,7 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
+    // 위/경도 -> TM좌표로 변환
     private fun setWGS84TM(lat: Double, lon: Double): Pair<Double, Double> {
         Log.d("TMchanger", lat.toString() + "," + lon.toString())
 
@@ -162,6 +143,97 @@ class HomeFragment : Fragment() {
         val TMInfo = Pair(TM_x, TM_y)
         return TMInfo
     }
+
+    // 가장 가까운 측정소를 구하고 미세먼지 농도 데이터 가져오기
+    private fun getDustInfo(retrofit: Retrofit, tmX: Double, tmY: Double) {
+        val stationService: StationService? = retrofit.create(StationService::class.java)
+
+        val key = "reoV++nM+7IsY4GLfsMfFBjKc/0t6gmgytKyqzrR7DbEaCNasNyCT131Qk2yPuPeC5uQqcHFlt4nWQLhDsnWDw=="
+        stationService?.getInfo(key, "json", tmX, tmY)
+            ?.enqueue(object : Callback<StationInfo> {
+                override fun onResponse(call: Call<StationInfo>, response: Response<StationInfo>) {
+                    val stationList = response.body()?.response?.body?.items
+                    val nearestStationAddress = stationList?.get(0)?.addr
+                    val nearestStationName = stationList?.get(0)?.stationName
+                    val subStationName = stationList?.get(1)?.stationName
+                    Log.d("JSON Test", "가장 가까운 측정소 주소는 $nearestStationAddress, 지역은 $nearestStationName 입니다. 후보 지역은 $subStationName!")
+
+                    getDustNum(retrofit, key, nearestStationName.toString(), subStationName.toString())
+                }
+
+                override fun onFailure(call: Call<StationInfo>, t: Throwable) {
+                    Log.d("onFailure in Station", t.message!!)
+                }
+            })
+    }
+
+    // 해당 측정소에서 미세먼지 데이터 가져오기
+    private fun getDustNum(retrofit: Retrofit, key: String, stationName: String, subStation: String) {
+        val dustService: DustService? = retrofit.create(DustService::class.java)
+        dustService?.getInfo(key, "json", stationName, "daily")
+            ?.enqueue(object : Callback<DustInfo> {
+                override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
+                    val dustList = response.body()?.response?.body?.items
+                    val dustNum = dustList?.get(0)?.pm10Value
+
+                    if (dustNum != "-") {
+                        Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
+                        binding.dust.text = "미세먼지 치수: $dustNum"
+                        setDustUI(dustNum!!.toInt())
+                    }
+                    // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근
+                    else {
+                        dustService.getInfo(key, "json", subStation, "daily")
+                            .enqueue(object : Callback<DustInfo> {
+                                override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
+                                    val subDustList = response.body()?.response?.body?.items
+                                    val subDustNum = subDustList?.get(0)?.pm10Value
+                                    Log.d("Sub Dust Num", "미세먼지 농도: $subDustNum, 측정소는 $subStation")
+                                    binding.dust.text = "미세먼지 치수: $subDustNum"
+                                    setDustUI(subDustNum!!.toInt())
+                                }
+
+                                override fun onFailure(call: Call<DustInfo>, t: Throwable) {
+                                    Log.d("onFailure in Sub Dust", t.message!!)
+                                }
+                            })
+                    }
+                }
+
+                override fun onFailure(call: Call<DustInfo>, t: Throwable) {
+                    Log.d("onFailure in Dust", t.message!!)
+                }
+            })
+    }
+
+    // 미세먼지 수치에 따른 UI
+    private fun setDustUI(dust: Int) = when (dust) {
+        in 0..15 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.smile)
+            binding.dust2.text = "매우 좋음"
+        }
+        in 16..30 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_green)
+            binding.imageView2.setBackgroundResource(R.drawable.smile)
+            binding.dust2.text = "좋음"
+        }
+        in 31..80 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_yellow_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.sceptic)
+            binding.dust2.text = "보통"
+        }
+        in 81..150 -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_orange_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.bad)
+            binding.dust2.text = "나쁨"
+        }
+        else -> {
+            binding.locationLayout.setBackgroundResource(R.drawable.rounded_red_btn)
+            binding.imageView2.setBackgroundResource(R.drawable.angry)
+            binding.dust2.text = "매우 나쁨"
+        }
+    }
 }
 
 interface StationService {
@@ -171,5 +243,15 @@ interface StationService {
         @Query("returnType") returnType: String,
         @Query("tmX") tmX: Double,
         @Query("tmY") tmY: Double,
-    ): Call<com.intention.android.goodmask.stationData.StationInfo>
+    ): Call<StationInfo>
+}
+
+interface DustService {
+    @GET("/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty")
+    fun getInfo(
+        @Query("serviceKey") serviceKey: String,
+        @Query("returnType") returnType: String,
+        @Query("stationName") stationName: String,
+        @Query("dataTerm") dataTerm: String
+    ): Call<DustInfo>
 }

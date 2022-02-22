@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     geocoder = Geocoder(this, Locale.KOREA)
-                   // 위치 좌표 구하기
+                    // 위치 좌표 구하기
                     val locationRequest =
                         com.google.android.gms.location.LocationRequest.create()
                     locationRequest.priority =
@@ -105,12 +105,9 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-    // 첫 어플 실행인지 flag 역할
-    var first: Boolean = true
 
     val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            var changedAddress: String = addressInfo
             for (location in locationResult.locations) {
                 if (location != null) {
                     var latitude = location.latitude
@@ -149,7 +146,7 @@ class MainActivity : AppCompatActivity() {
             requestCode == multiplePermissionCode && grantResults[0] == PackageManager.PERMISSION_GRANTED
         // 권한을 허락하지 않으면 종료
         if (!locationPermissionGranted) {
-            Toast.makeText(this, "앱 설정에서 위치정보 권한에 동의해야 사용 가능합니.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "앱 설정에서 위치정보 권한에 동의해야 사용 가능합니다.", Toast.LENGTH_SHORT).show()
             finish()
         } else {
             getLocation()

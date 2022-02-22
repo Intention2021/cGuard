@@ -100,7 +100,7 @@ class HomeFragment : Fragment() {
         return view
     }
 
-    private fun getNewLocation() {
+    public fun getNewLocation() {
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION

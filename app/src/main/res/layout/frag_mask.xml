@@ -50,6 +50,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/maskInfoTitle" />
 
             <TextView
+                android:textColor="#000"
                 android:id="@+id/maskInfoText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -101,6 +102,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/batteryText" />
 
             <TextView
+                android:textColor="#000"
                 android:id="@+id/batteryPercent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -154,6 +156,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/filterText" />
 
             <TextView
+                android:textColor="#000"
                 android:id="@+id/filterDay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -194,6 +197,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <SeekBar
+                android:elevation="3dp"
                 android:id="@+id/seekBar"
                 style="@style/Widget.AppCompat.SeekBar.Discrete"
                 android:layout_width="match_parent"

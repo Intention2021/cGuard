@@ -1,6 +1,7 @@
 package com.intention.android.goodmask.fragment
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
@@ -18,6 +19,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.intention.android.goodmask.R
+import com.intention.android.goodmask.activity.ForegroundActivity
+import com.intention.android.goodmask.activity.MyService
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.stationData.StationInfo
@@ -179,7 +182,11 @@ class HomeFragment : Fragment() {
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
                         binding.dust.text = "미세먼지 치수: $dustNum"
-                        setDustUI(dustNum!!.toInt())
+
+                        // 포그라운드 미세먼지 정도 데이터 전달 위함
+                        val status: String = setDustUI(dustNum!!.toInt())
+                        val intent = Intent(context, ForegroundActivity::class.java)
+                        intent.putExtra("dustStatus", status)
                     }
                     // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근
                     else {
@@ -190,7 +197,11 @@ class HomeFragment : Fragment() {
                                     val subDustNum = subDustList?.get(0)?.pm10Value
                                     Log.d("Sub Dust Num", "미세먼지 농도: $subDustNum, 측정소는 $subStation")
                                     binding.dust.text = "미세먼지 치수: $subDustNum"
-                                    setDustUI(subDustNum!!.toInt())
+                                    val subStatus = setDustUI(subDustNum!!.toInt())
+
+                                    // 포그라운드에 미세먼지 정도 데이터 전달 위함
+                                    val intent = Intent(context, ForegroundActivity::class.java)
+                                    intent.putExtra("dustStatus", subStatus)
                                 }
 
                                 override fun onFailure(call: Call<DustInfo>, t: Throwable) {
@@ -207,32 +218,41 @@ class HomeFragment : Fragment() {
     }
 
     // 미세먼지 수치에 따른 UI
-    private fun setDustUI(dust: Int) = when (dust) {
-        in 0..15 -> {
-            binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)
-            binding.imageView2.setBackgroundResource(R.drawable.smile)
-            binding.dust2.text = "매우 좋음"
+    private fun setDustUI(dust: Int): String {
+        var status: String = "status"
+        when (dust) {
+            in 0..15 -> {
+                binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)
+                binding.imageView2.setBackgroundResource(R.drawable.smile)
+                binding.dust2.text = "매우 좋음"
+                status = binding.dust2.toString()
+            }
+            in 16..30 -> {
+                binding.locationLayout.setBackgroundResource(R.drawable.rounded_green)
+                binding.imageView2.setBackgroundResource(R.drawable.smile)
+                binding.dust2.text = "좋음"
+                status = binding.dust2.toString()
+            }
+            in 31..80 -> {
+                binding.locationLayout.setBackgroundResource(R.drawable.rounded_yellow_btn)
+                binding.imageView2.setBackgroundResource(R.drawable.sceptic)
+                binding.dust2.text = "보통"
+                status = binding.dust2.toString()
+            }
+            in 81..150 -> {
+                binding.locationLayout.setBackgroundResource(R.drawable.rounded_orange_btn)
+                binding.imageView2.setBackgroundResource(R.drawable.bad)
+                binding.dust2.text = "나쁨"
+                status = binding.dust2.toString()
+            }
+            else -> {
+                binding.locationLayout.setBackgroundResource(R.drawable.rounded_red_btn)
+                binding.imageView2.setBackgroundResource(R.drawable.angry)
+                binding.dust2.text = "매우 나쁨"
+                status = binding.dust2.toString()
+            }
         }
-        in 16..30 -> {
-            binding.locationLayout.setBackgroundResource(R.drawable.rounded_green)
-            binding.imageView2.setBackgroundResource(R.drawable.smile)
-            binding.dust2.text = "좋음"
-        }
-        in 31..80 -> {
-            binding.locationLayout.setBackgroundResource(R.drawable.rounded_yellow_btn)
-            binding.imageView2.setBackgroundResource(R.drawable.sceptic)
-            binding.dust2.text = "보통"
-        }
-        in 81..150 -> {
-            binding.locationLayout.setBackgroundResource(R.drawable.rounded_orange_btn)
-            binding.imageView2.setBackgroundResource(R.drawable.bad)
-            binding.dust2.text = "나쁨"
-        }
-        else -> {
-            binding.locationLayout.setBackgroundResource(R.drawable.rounded_red_btn)
-            binding.imageView2.setBackgroundResource(R.drawable.angry)
-            binding.dust2.text = "매우 나쁨"
-        }
+        return status
     }
 }
 

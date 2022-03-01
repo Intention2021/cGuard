@@ -1,10 +1,12 @@
 package com.intention.android.goodmask.activity
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationRequest
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
@@ -48,7 +50,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         allowPermissions()
-        // replaceFragment(homeFragment)
         binding.bnvMain.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.frag_homeground -> {
@@ -121,7 +122,13 @@ class MainActivity : AppCompatActivity() {
                     addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
                     Log.d("Test", addressInfo)
                     dataToFragHome(latitude, longtitude, addressInfo)
+
+                    // 포그라운드에 현 위치 데이터 전달하기 위함
+                    val intent = Intent(this@MainActivity, ForegroundActivity::class.java)
+                    intent.putExtra("address", addressInfo)
+                    Log.e("Give Data", "데이터 전달 $addressInfo")
                     replaceFragment(homeFragment)
+                    startService()
                 }
             }
         }
@@ -150,6 +157,16 @@ class MainActivity : AppCompatActivity() {
             finish()
         } else {
             getLocation()
+        }
+    }
+
+    // foreground로 띄워지게 설정
+    private fun startService(){
+        val intent = Intent(this, MyService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.startForegroundService(intent)
+        } else{
+            this.startService(intent)
         }
     }
 

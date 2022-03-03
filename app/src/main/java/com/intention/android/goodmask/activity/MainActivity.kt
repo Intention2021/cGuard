@@ -1,12 +1,16 @@
 package com.intention.android.goodmask.activity
 
+import DeviceController
 import android.Manifest
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationRequest
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
@@ -23,16 +27,22 @@ import com.intention.android.goodmask.fragment.MaskFragment
 import com.intention.android.goodmask.fragment.NotificationFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
 import java.util.*
+import java.io.IOException
+
+
+
 
 class MainActivity : AppCompatActivity() {
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
     val notificationFragment = NotificationFragment()
+    val deviceController = DeviceController(Handler())
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
+    private lateinit var device : BluetoothDevice
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
 
@@ -44,6 +54,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val intent = getIntent();
+        device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -70,6 +83,8 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        deviceController.connectDevice(device)
     }
 
     // 최초 실행시 사용자에게 권한 묻기

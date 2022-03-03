@@ -71,7 +71,31 @@ class DeviceActivity : AppCompatActivity() {
     public fun checkLocPermission() {
         if (ActivityCompat.checkSelfPermission(
                 applicationContext,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            )
+            == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            == PackageManager.PERMISSION_GRANTED
+        ){
+        }
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.BLUETOOTH_ADVERTISE,
+            )
+            == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            == PackageManager.PERMISSION_GRANTED
+        ){
+        }
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.BLUETOOTH_CONNECT,
             )
             == PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(
@@ -117,6 +141,7 @@ class DeviceActivity : AppCompatActivity() {
         var linear = binding.parennnt
         load = binding.door
         leDeviceListAdapter = BleListAdapter(linear.context)
+        checkLocPermission()
         scanDevice()
         var deviceAdderBtn = binding.deviceAdder
         deviceAdderBtn.setOnClickListener {
@@ -128,6 +153,7 @@ class DeviceActivity : AppCompatActivity() {
         leDeviceListAdapter.setItemClickListener(object : BleListAdapter.ItemClickListener{
             override fun onClick(view: View, device: BluetoothDevice?, position:Int) {
                 val inten = Intent(applicationContext, MainActivity::class.java)
+                inten.putExtra("device", device)
                 startActivity(inten)
             }
 
@@ -158,7 +184,6 @@ class DeviceActivity : AppCompatActivity() {
         Handler().postDelayed({
             load.visibility = View.INVISIBLE
         }, 700)
-
     }
 
     // device가 연결되어 있는지 확인

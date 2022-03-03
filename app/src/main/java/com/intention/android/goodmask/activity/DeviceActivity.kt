@@ -29,6 +29,10 @@ import android.opengl.Visibility
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.model.MaskData
+import android.os.Build
+
+
+
 
 class DeviceActivity : AppCompatActivity() {
 
@@ -47,7 +51,6 @@ class DeviceActivity : AppCompatActivity() {
     }
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            Log.d("hihi","제바아ㅏ아어ㅏ러ㅏㅣㅓㅁ나ㅣ러ㅣㅏ머림너라ㅣㅁ나ㅣㅓㄹㅁㅇ니ㅏ")
             val action = intent.action
             if(BluetoothDevice.ACTION_FOUND == action) {
                 val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
@@ -81,29 +84,23 @@ class DeviceActivity : AppCompatActivity() {
             == PackageManager.PERMISSION_GRANTED
         ){
         }
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ),
+                1
             )
-            == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.BLUETOOTH
+                ),
+                1
             )
-            == PackageManager.PERMISSION_GRANTED
-        ){
-        }
-        if (ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.BLUETOOTH_CONNECT,
-            )
-            == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            == PackageManager.PERMISSION_GRANTED
-        ){
         }
     }
 

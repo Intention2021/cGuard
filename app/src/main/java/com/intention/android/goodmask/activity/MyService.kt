@@ -26,7 +26,7 @@ class MyService : Service() {
 
     private fun startNotification(){
         channelRegister()
-        val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, HomeFragment::class.java), 0)
+        val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, HomeFragment::class.java), PendingIntent.FLAG_IMMUTABLE)
         val view = RemoteViews(packageName, R.layout.foreground)
 
         // 오레오 버전 이상 (요즘 안드로이드는 다 오레오 버전 이상임)

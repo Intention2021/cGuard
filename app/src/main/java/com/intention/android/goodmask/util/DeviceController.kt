@@ -27,7 +27,7 @@ class DeviceController(
             btSocket?.connect()
         } catch (e: IOException) {
             e.printStackTrace()
-            Log.d("제발", "실행 x")
+            Log.d("제발", "device : ${device} not connected")
         }
 
         if(!flag){

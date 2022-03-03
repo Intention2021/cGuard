@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        deviceController.connectDevice(device)
+        // deviceController.connectDevice(device)
     }
 
     // 최초 실행시 사용자에게 권한 묻기

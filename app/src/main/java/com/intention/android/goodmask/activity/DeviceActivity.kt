@@ -1,5 +1,6 @@
 package com.intention.android.goodmask.activity
 
+import DeviceController
 import android.Manifest
 import android.app.ListActivity
 import android.bluetooth.BluetoothAdapter
@@ -30,8 +31,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.model.MaskData
 import android.os.Build
-
-
+import android.os.Parcelable
 
 
 class DeviceActivity : AppCompatActivity() {
@@ -63,7 +63,7 @@ class DeviceActivity : AppCompatActivity() {
                 }
                 if(!existence)leDeviceListAdapter.addDevice(device)
                 leDeviceListAdapter.notifyDataSetChanged()
-                Log.d("hihi","${leDeviceListAdapter.items}")
+                Log.d("hihi","${device?.name}")
             }
         }
     }
@@ -106,8 +106,6 @@ class DeviceActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        checkLocPermission()
         packageManager.takeIf { it.missingSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) }?.also {
             Toast.makeText(this,"기기가 블루투스를 지원하지 않아 디바이스 등록이 불가합니다.", Toast.LENGTH_SHORT).show()
             deviceConnectivity = false
@@ -128,6 +126,10 @@ class DeviceActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        checkLocPermission()
+        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        registerReceiver(mReceiver, filter)
+
         maskDB = MaskDB.getInstance(this)
         val r = Runnable {
             maskList = maskDB?.MaskDao()!!.getAll()
@@ -138,7 +140,6 @@ class DeviceActivity : AppCompatActivity() {
         var linear = binding.parennnt
         load = binding.door
         leDeviceListAdapter = BleListAdapter(linear.context)
-        checkLocPermission()
         scanDevice()
         var deviceAdderBtn = binding.deviceAdder
         deviceAdderBtn.setOnClickListener {
@@ -149,9 +150,17 @@ class DeviceActivity : AppCompatActivity() {
         var deviceBLE = binding.deviceList
         leDeviceListAdapter.setItemClickListener(object : BleListAdapter.ItemClickListener{
             override fun onClick(view: View, device: BluetoothDevice?, position:Int) {
-                val inten = Intent(applicationContext, MainActivity::class.java)
-                inten.putExtra("device", device)
-                startActivity(inten)
+                val deContoller : DeviceController = DeviceController(Handler(), device!!)
+                if(deContoller.btSocket!!.isConnected){
+                    val inten = Intent(applicationContext, MainActivity::class.java)
+                    inten.putExtra("device", device)
+                    deContoller.deController.cancel()
+                    startActivity(inten)
+                }
+                else {
+                    deContoller.deController.cancel()
+                    Toast.makeText(applicationContext, "${device.name}이 연결되지 않습니다.", Toast.LENGTH_LONG).show()
+                }
             }
 
         })
@@ -160,10 +169,9 @@ class DeviceActivity : AppCompatActivity() {
 
     // device scan
     private fun scanDevice() {
+        leDeviceListAdapter.items?.clear()
+        bluetoothAdapter?.startDiscovery()
         load.visibility = View.VISIBLE
-        leDeviceListAdapter.clear()
-        var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        this.registerReceiver(mReceiver, filter)
         val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
         pairedDevices?.forEach { device ->
             var existence : Boolean = false
@@ -177,10 +185,14 @@ class DeviceActivity : AppCompatActivity() {
             val deviceName = device.name
             val deviceHardwareAddress = device.address // MAC address
         }
-        scanLeDevice(true)
         Handler().postDelayed({
-            load.visibility = View.INVISIBLE
-        }, 700)
+            load.visibility = View.GONE
+        }, 5000)
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 
     // device가 연결되어 있는지 확인
@@ -194,31 +206,27 @@ class DeviceActivity : AppCompatActivity() {
         }
     }
 
-    // device 연결
-    public fun deviceConnector() {
-
-    }
-
     private val SCAN_PERIOD: Long = 10000
     private var mScanning: Boolean = false
-
-    private val leScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
-    runOnUiThread {
-        if(device.name != null) {
-            var existence : Boolean = false
-            for (dev in leDeviceListAdapter.items!!){
-                if(device.address == dev.address || device?.name == null){
-                    existence = true
-                    break
-                }
-            }
-            if(!existence)leDeviceListAdapter.addDevice(device)
-            leDeviceListAdapter.notifyDataSetChanged()
-        }
-    }
-}
-
     private fun scanLeDevice(enable: Boolean) {
+        val leScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
+                var existence : Boolean = true
+                if (device.name != null){
+                    for(dev in leDeviceListAdapter.items!!){
+                        if(device.address == dev.address){
+                            existence = false
+                            break
+                        }
+                    }
+                }else existence = false
+
+                if(existence) {
+                    leDeviceListAdapter.addDevice(device)
+                    Log.d("제발나와라ㅇㅖ~~","items : ${leDeviceListAdapter.items}")
+                }
+                leDeviceListAdapter.notifyDataSetChanged()
+        }
+
         bluetoothAdapter?.startDiscovery()
         when (enable) {
             true -> {

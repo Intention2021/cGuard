@@ -1,6 +1,7 @@
 package com.intention.android.goodmask.activity
 
 import android.app.*
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -14,14 +15,30 @@ import com.intention.android.goodmask.databinding.ForegroundBinding
 import com.intention.android.goodmask.fragment.HomeFragment
 
 class MyService : Service() {
+
+    var address : String? = ""
+    var status : String? = ""
+
     companion object{
         const val NOTIFICATION_ID = 10
         const val CHANNEL_ID = "notification channel"
     }
     override fun onCreate() {
         super.onCreate()
-        Log.d("Service Test", "MyService class is started!")
         startNotification()
+        Log.d("Service Test", "MyService class is started!")
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        if (intent == null) {
+            return START_STICKY
+        } else {
+            address = intent.getStringExtra("command")
+            status = intent.getStringExtra("name")
+        }
+
+        return super.onStartCommand(intent, flags, startId)
     }
 
     private fun startNotification(){
@@ -33,7 +50,7 @@ class MyService : Service() {
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.goodmask_icon)
-                .setCustomContentView(view)
+                .setContentTitle("${address}의 미세먼지 농도는 ${status}입니다.")
                 .setContentIntent(contentIntent)
                 .build()
         }
@@ -41,7 +58,6 @@ class MyService : Service() {
         else{
             Notification.Builder(this)
                 .setSmallIcon(R.drawable.goodmask_icon)
-                .setContent(view)
                 .setContentIntent(contentIntent)
                 .build()
         }

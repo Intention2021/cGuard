@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -42,8 +43,10 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     lateinit var maskFanPower: SeekBar
     lateinit var maskFanPowerText: TextView
+    lateinit var intent : Intent
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
+    var address : String? = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,7 +55,7 @@ class HomeFragment : Fragment() {
     ): View? {
         _binding = FragHomeBinding.inflate(inflater, container, false)
         val view = binding.root
-        val address = arguments?.getString("address")
+        address = arguments?.getString("address")
         val lat = arguments?.getDouble("latitude")
         val long = arguments?.getDouble("longitude")
 
@@ -60,6 +63,7 @@ class HomeFragment : Fragment() {
         maskFanPowerText = binding.fanTitle
         val (tmX, tmY) = setWGS84TM(lat!!, long!!)
 
+        intent = Intent(context, MyService::class.java)
         Log.d("TM_XY", "$tmX / $tmY")
 
         val gson = GsonBuilder().setLenient().create()
@@ -86,7 +90,19 @@ class HomeFragment : Fragment() {
         binding.refreshBtn.setOnClickListener {
             getNewLocation(retrofit)
         }
+
+        startService()
+
         return view
+    }
+
+    // foreground로 띄워지게 설정
+    private fun startService(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context?.startForegroundService(intent)
+        } else{
+            context?.startService(intent)
+        }
     }
 
     // 새로고침 시 새 주소 출력
@@ -178,6 +194,7 @@ class HomeFragment : Fragment() {
                 override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
                     val dustList = response.body()?.response?.body?.items
                     val dustNum = dustList?.get(0)?.pm10Value
+                    intent.putExtra("address", address)
 
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
@@ -185,7 +202,6 @@ class HomeFragment : Fragment() {
 
                         // 포그라운드 미세먼지 정도 데이터 전달 위함
                         val status: String = setDustUI(dustNum!!.toInt())
-                        val intent = Intent(context, ForegroundActivity::class.java)
                         intent.putExtra("dustStatus", status)
                     }
                     // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근
@@ -200,7 +216,6 @@ class HomeFragment : Fragment() {
                                     val subStatus = setDustUI(subDustNum!!.toInt())
 
                                     // 포그라운드에 미세먼지 정도 데이터 전달 위함
-                                    val intent = Intent(context, ForegroundActivity::class.java)
                                     intent.putExtra("dustStatus", subStatus)
                                 }
 

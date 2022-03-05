@@ -11,29 +11,31 @@ import java.util.*
 
 class DeviceController(
     // handler that gets info from Bluetooth service
-    private val handler: Handler
+    public val handler: Handler,
+    public val device: BluetoothDevice
 ) {
     val MESSAGE_READ: Int = 0
     val MESSAGE_WRITE: Int = 1
     val MESSAGE_TOAST: Int = 2
+    public var flag = false
+    val btSocket : BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
+        device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+    }
+    public var deController = ConnectedThread(btSocket!!)
 
-    public fun connectDevice(device: BluetoothDevice) {
-        var flag = true
-        val btSocket : BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
-        }
-
+    init {
         try {
             btSocket?.connect()
+            Log.d("제발", "device : $device connected")
+            flag = true
         } catch (e: IOException) {
             e.printStackTrace()
-            Log.d("제발", "device : ${device} not connected")
+            flag = false
+            Log.d("제발", "device : ${device.name} not connected")
         }
-
-        if(!flag){
-            val deController : DeviceController.ConnectedThread = DeviceController(Handler()).ConnectedThread(btSocket!!)
+        if (flag) {
             deController.start()
-            deController.write("hello".toByteArray())
+            deController.write("abcdefg".toByteArray())
         }
     }
 
@@ -51,10 +53,10 @@ class DeviceController(
                 numBytes = try {
                     mmInStream.read(mmBuffer)
                 } catch (e: IOException) {
-                    Log.d(TAG, "Input stream was disconnected", e)
+                    Log.d("제발", "Input stream was disconnected", e)
                     break
                 }
-                Log.d("제발 연결되어라", numBytes.toString())
+                Log.d("제발", "read : "+numBytes.toString())
 
                 // Send the obtained bytes to the UI activity.
                 val readMsg = handler.obtainMessage(
@@ -67,10 +69,10 @@ class DeviceController(
         // Call this from the main activity to send data to the remote device.
         fun write(bytes: ByteArray) {
             try {
-                Log.d("제발 연결되어라", bytes.toString())
+                Log.d("제발", "write : " + bytes.toString())
                 mmOutStream.write(bytes)
             } catch (e: IOException) {
-                Log.e(TAG, "Error occurred when sending data", e)
+                Log.e("제발", "Error occurred when sending data", e)
 
                 // Send a failure message back to the activity.
                 val writeErrorMsg = handler.obtainMessage(MESSAGE_TOAST)

@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
     val notificationFragment = NotificationFragment()
-    val deviceController = DeviceController(Handler())
+    lateinit var deviceController : DeviceController
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var device : BluetoothDevice
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
+
 
     // 권한 목록
     private val requiredPermissionsList = arrayOf(
@@ -56,9 +57,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = getIntent();
         device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        deviceController = DeviceController(Handler(), device)
 
+        if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -67,25 +69,27 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.frag_homeground -> {
                     replaceFragment(homeFragment)
+                    deviceController.deController.write("homefrag".toByteArray())
                     true
                 }
                 R.id.frag_stat -> {
+                    deviceController.deController.write("statfrag".toByteArray())
                     replaceFragment(staticsFragment)
                     true
                 }
                 R.id.frag_noti -> {
+                    deviceController.deController.write("notifrag".toByteArray())
                     replaceFragment(notificationFragment)
                     true
                 }
                 R.id.frag_masks -> {
+                    deviceController.deController.write("maskfrag".toByteArray())
                     replaceFragment(maskFragment)
                     true
                 }
                 else -> false
             }
         }
-
-        // deviceController.connectDevice(device)
     }
 
     // 최초 실행시 사용자에게 권한 묻기
@@ -141,9 +145,9 @@ class MainActivity : AppCompatActivity() {
                     // 포그라운드에 현 위치 데이터 전달하기 위함
                     val intent = Intent(this@MainActivity, ForegroundActivity::class.java)
                     intent.putExtra("address", addressInfo)
+                    intent.putExtra("device", device)
                     Log.e("Give Data", "데이터 전달 $addressInfo")
                     replaceFragment(homeFragment)
-                    startService()
                 }
             }
         }
@@ -172,16 +176,6 @@ class MainActivity : AppCompatActivity() {
             finish()
         } else {
             getLocation()
-        }
-    }
-
-    // foreground로 띄워지게 설정
-    private fun startService(){
-        val intent = Intent(this, MyService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            this.startForegroundService(intent)
-        } else{
-            this.startService(intent)
         }
     }
 

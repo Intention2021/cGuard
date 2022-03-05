@@ -46,12 +46,6 @@ class BleListAdapter(context: Context)
     override fun getItemCount(): Int {
         return items?.size?:0
     }
-    fun setItem(item: ArrayList<BluetoothDevice>?){
-        if(item==null) return
-        items = item
-        notifyDataSetChanged()
-    }
-
 
     inner class BleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 

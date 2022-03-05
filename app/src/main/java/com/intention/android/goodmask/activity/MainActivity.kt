@@ -3,13 +3,9 @@ package com.intention.android.goodmask.activity
 import DeviceController
 import android.Manifest
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import android.location.LocationRequest
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -26,20 +22,15 @@ import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
-import com.intention.android.goodmask.fragment.NotificationFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
 import java.util.*
-import java.io.IOException
-
-
 
 
 class MainActivity : AppCompatActivity() {
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
-    val notificationFragment = NotificationFragment()
-    lateinit var deviceController : DeviceController
+    val deviceController = DeviceController(Handler())
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
@@ -77,11 +68,7 @@ class MainActivity : AppCompatActivity() {
                     replaceFragment(staticsFragment)
                     true
                 }
-                R.id.frag_noti -> {
-                    deviceController.deController.write("notifrag".toByteArray())
-                    replaceFragment(notificationFragment)
-                    true
-                }
+
                 R.id.frag_masks -> {
                     deviceController.deController.write("maskfrag".toByteArray())
                     replaceFragment(maskFragment)
@@ -141,12 +128,6 @@ class MainActivity : AppCompatActivity() {
                     addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
                     Log.d("Test", addressInfo)
                     dataToFragHome(latitude, longtitude, addressInfo)
-
-                    // 포그라운드에 현 위치 데이터 전달하기 위함
-                    val intent = Intent(this@MainActivity, ForegroundActivity::class.java)
-                    intent.putExtra("address", addressInfo)
-                    intent.putExtra("device", device)
-                    Log.e("Give Data", "데이터 전달 $addressInfo")
                     replaceFragment(homeFragment)
                 }
             }

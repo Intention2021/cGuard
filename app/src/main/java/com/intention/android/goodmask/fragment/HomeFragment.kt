@@ -13,14 +13,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.intention.android.goodmask.R
-import com.intention.android.goodmask.activity.ForegroundActivity
 import com.intention.android.goodmask.activity.MyService
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.dustData.DustInfo
@@ -46,7 +45,8 @@ class HomeFragment : Fragment() {
     lateinit var intent : Intent
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
-    var address : String? = ""
+    lateinit var address: String
+    var count = 1
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,7 +55,7 @@ class HomeFragment : Fragment() {
     ): View? {
         _binding = FragHomeBinding.inflate(inflater, container, false)
         val view = binding.root
-        address = arguments?.getString("address")
+        address = arguments?.getString("address").toString()
         val lat = arguments?.getDouble("latitude")
         val long = arguments?.getDouble("longitude")
 
@@ -74,6 +74,15 @@ class HomeFragment : Fragment() {
             .build()
 
         getDustInfo(retrofit, tmX, tmY)
+
+        // 정해진 시간마다 업데이트
+        val timer = Timer()
+        timer.schedule(object : TimerTask(){
+            override fun run() {
+                getNewLocation(retrofit)
+            }
+
+        }, 600000, 600000)
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -182,8 +191,24 @@ class HomeFragment : Fragment() {
 
                 override fun onFailure(call: Call<StationInfo>, t: Throwable) {
                     Log.d("onFailure in Station", t.message!!)
+                    dataToService("좋음")
+                    Toast.makeText(context, "측정소 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                 }
             })
+    }
+
+    private fun dataToService(status: String){
+        // 포그라운드 데이터 전달 위함
+        val intent = Intent(context, MyService::class.java)
+        intent.putExtra("address", address)
+        Log.e("Give Address", "데이터 전달 $address")
+        Log.e("Home to Service Status", status)
+        intent.putExtra("dustStatus", status)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context?.startForegroundService(intent)
+        } else{
+            context?.startService(intent)
+        }
     }
 
     // 해당 측정소에서 미세먼지 데이터 가져오기
@@ -199,10 +224,9 @@ class HomeFragment : Fragment() {
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
                         binding.dust.text = "미세먼지 치수: $dustNum"
-
-                        // 포그라운드 미세먼지 정도 데이터 전달 위함
                         val status: String = setDustUI(dustNum!!.toInt())
-                        intent.putExtra("dustStatus", status)
+                        // 서비스 클래스로 데이텉 전송
+                        dataToService(status)
                     }
                     // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근
                     else {
@@ -214,13 +238,13 @@ class HomeFragment : Fragment() {
                                     Log.d("Sub Dust Num", "미세먼지 농도: $subDustNum, 측정소는 $subStation")
                                     binding.dust.text = "미세먼지 치수: $subDustNum"
                                     val subStatus = setDustUI(subDustNum!!.toInt())
-
-                                    // 포그라운드에 미세먼지 정도 데이터 전달 위함
-                                    intent.putExtra("dustStatus", subStatus)
+                                    // 서비스 클래스로 데이텉 전송
+                                    dataToService(subStatus)
                                 }
 
                                 override fun onFailure(call: Call<DustInfo>, t: Throwable) {
                                     Log.d("onFailure in Sub Dust", t.message!!)
+                                    Toast.makeText(context, "미세먼지 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                                 }
                             })
                     }
@@ -228,13 +252,14 @@ class HomeFragment : Fragment() {
 
                 override fun onFailure(call: Call<DustInfo>, t: Throwable) {
                     Log.d("onFailure in Dust", t.message!!)
+                    Toast.makeText(context, "미세먼지 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                 }
             })
     }
 
     // 미세먼지 수치에 따른 UI
     private fun setDustUI(dust: Int): String {
-        var status: String = "status"
+        var status: String?= "status"
         when (dust) {
             in 0..15 -> {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)

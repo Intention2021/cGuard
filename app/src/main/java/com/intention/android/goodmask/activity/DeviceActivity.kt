@@ -39,7 +39,7 @@ class DeviceActivity : AppCompatActivity() {
     private var maskDB : MaskDB? = null
     private var maskList = mutableListOf<MaskData>()
 
-    private var deviceConnectivity: Boolean = true
+    private var deviceConnectivity: Boolean = false
     private var handler = Handler()
     private var deviceID: String = ""
     private lateinit var load : ConstraintLayout

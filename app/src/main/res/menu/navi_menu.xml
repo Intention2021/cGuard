@@ -13,12 +13,6 @@
         android:title="통계"/>
 
     <item
-        android:id="@+id/frag_noti"
-        android:enabled="true"
-        android:icon="@drawable/ic_baseline_notifications_24"
-        android:title="알림"/>
-
-    <item
         android:id="@+id/frag_masks"
         android:enabled="true"
         android:icon="@drawable/medical_mask"

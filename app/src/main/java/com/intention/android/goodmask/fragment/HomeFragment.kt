@@ -45,6 +45,7 @@ class HomeFragment : Fragment() {
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
+    var count = 1
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,6 +72,15 @@ class HomeFragment : Fragment() {
             .build()
 
         getDustInfo(retrofit, tmX, tmY)
+
+        // 정해진 시간마다 업데이트
+        val timer = Timer()
+        timer.schedule(object : TimerTask(){
+            override fun run() {
+                getNewLocation(retrofit)
+            }
+
+        }, 600000, 600000)
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -167,7 +177,7 @@ class HomeFragment : Fragment() {
 
                 override fun onFailure(call: Call<StationInfo>, t: Throwable) {
                     Log.d("onFailure in Station", t.message!!)
-                    dataToService("AirKorea Service Error")
+                    dataToService("좋음")
                     Toast.makeText(context, "측정소 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                 }
             })

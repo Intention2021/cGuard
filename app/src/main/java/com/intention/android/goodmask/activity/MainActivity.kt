@@ -3,13 +3,9 @@ package com.intention.android.goodmask.activity
 import DeviceController
 import android.Manifest
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import android.location.LocationRequest
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -26,19 +22,14 @@ import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
-import com.intention.android.goodmask.fragment.NotificationFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
 import java.util.*
-import java.io.IOException
-
-
 
 
 class MainActivity : AppCompatActivity() {
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
-    val notificationFragment = NotificationFragment()
     val deviceController = DeviceController(Handler())
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -71,10 +62,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.frag_stat -> {
                     replaceFragment(staticsFragment)
-                    true
-                }
-                R.id.frag_noti -> {
-                    replaceFragment(notificationFragment)
                     true
                 }
                 R.id.frag_masks -> {

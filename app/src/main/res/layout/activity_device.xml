@@ -65,7 +65,6 @@
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
             android:elevation="5dp"
-            android:background="@drawable/rounded_white_btn2"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -82,7 +81,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="92dp"
         android:elevation="5dp"
-        android:background="@drawable/rounded_grey_btn"
+        android:background="#8C8C8C"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="92dp">
 
@@ -108,7 +107,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="12dp"
-        android:background="@drawable/rounded_orange_btn"
+        android:background="@color/gmcolor"
         android:fontFamily="@font/payboocmedium"
         android:text="기기 검색하기"
         android:textColor="#FFF"

@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
 
+
     // 권한 목록
     private val requiredPermissionsList = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -47,9 +48,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /*val intent = getIntent();
-        device = intent.getParcelableExtra<BluetoothDevice>("device")!!*/
+        device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        deviceController = DeviceController(Handler(), device)
 
+        if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -58,21 +60,23 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.frag_homeground -> {
                     replaceFragment(homeFragment)
+                    deviceController.deController.write("homefrag".toByteArray())
                     true
                 }
                 R.id.frag_stat -> {
+                    deviceController.deController.write("statfrag".toByteArray())
                     replaceFragment(staticsFragment)
                     true
                 }
+
                 R.id.frag_masks -> {
+                    deviceController.deController.write("maskfrag".toByteArray())
                     replaceFragment(maskFragment)
                     true
                 }
                 else -> false
             }
         }
-
-        // deviceController.connectDevice(device)
     }
 
     // 최초 실행시 사용자에게 권한 묻기

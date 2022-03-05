@@ -42,6 +42,7 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     lateinit var maskFanPower: SeekBar
     lateinit var maskFanPowerText: TextView
+    lateinit var intent : Intent
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
@@ -62,6 +63,7 @@ class HomeFragment : Fragment() {
         maskFanPowerText = binding.fanTitle
         val (tmX, tmY) = setWGS84TM(lat!!, long!!)
 
+        intent = Intent(context, MyService::class.java)
         Log.d("TM_XY", "$tmX / $tmY")
 
         val gson = GsonBuilder().setLenient().create()
@@ -97,7 +99,19 @@ class HomeFragment : Fragment() {
         binding.refreshBtn.setOnClickListener {
             getNewLocation(retrofit)
         }
+
+        startService()
+
         return view
+    }
+
+    // foreground로 띄워지게 설정
+    private fun startService(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context?.startForegroundService(intent)
+        } else{
+            context?.startService(intent)
+        }
     }
 
     // 새로고침 시 새 주소 출력
@@ -205,6 +219,7 @@ class HomeFragment : Fragment() {
                 override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
                     val dustList = response.body()?.response?.body?.items
                     val dustNum = dustList?.get(0)?.pm10Value
+                    intent.putExtra("address", address)
 
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")

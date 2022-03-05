@@ -23,6 +23,7 @@ import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
+import java.io.IOException
 import java.util.*
 
 
@@ -30,12 +31,12 @@ class MainActivity : AppCompatActivity() {
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
-    val deviceController = DeviceController(Handler())
+    lateinit var deviceController : DeviceController
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
-    private lateinit var device : BluetoothDevice
+    private var device : BluetoothDevice? = null
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
 
@@ -49,7 +50,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         device = intent.getParcelableExtra<BluetoothDevice>("device")!!
-        deviceController = DeviceController(Handler(), device)
+
+        deviceController = DeviceController(Handler(), device!!)
 
         if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
         binding = ActivityMainBinding.inflate(layoutInflater)

@@ -22,9 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GoodMask"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".activity.ForegroundActivity"
-            android:exported="false" />
+
         <activity
             android:name=".activity.SplashActivity"
             android:exported="true">

@@ -1,6 +1,7 @@
 package com.intention.android.goodmask.activity
 
 import android.app.*
+import android.app.Service.*
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -10,7 +11,6 @@ import android.util.Log
 import android.widget.RemoteViews
 import android.widget.TextView
 import com.intention.android.goodmask.R
-import com.intention.android.goodmask.databinding.ForegroundBinding
 import com.intention.android.goodmask.fragment.HomeFragment
 
 class MyService : Service() {
@@ -18,30 +18,43 @@ class MyService : Service() {
         const val NOTIFICATION_ID = 10
         const val CHANNEL_ID = "notification channel"
     }
+
     override fun onCreate() {
         super.onCreate()
         Log.d("Service Test", "MyService class is started!")
-        startNotification()
     }
 
-    private fun startNotification(){
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // null일 경우 다시 받아오는 것을 실행
+        if (intent == null){
+            return START_STICKY
+        }
+        // 받아오면 foreground 실행
+        else{
+            val address = intent.getStringExtra("address")
+            val status = intent.getStringExtra("dustStatus")
+            startNotification(address.toString(), status.toString())
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun startNotification(address: String, status:String){
         channelRegister()
         val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, HomeFragment::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val view = RemoteViews(packageName, R.layout.foreground)
 
         // 오레오 버전 이상 (요즘 안드로이드는 다 오레오 버전 이상임)
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle("현재위치 $address 의 미세먼지 정도는 $status 입니다.")
                 .setSmallIcon(R.drawable.goodmask_icon)
-                .setCustomContentView(view)
                 .setContentIntent(contentIntent)
                 .build()
         }
         // 오레오 버전 미만
         else{
             Notification.Builder(this)
+                .setContentTitle("현재위치 $address 의 미세먼지 정도는 $status 입니다.")
                 .setSmallIcon(R.drawable.goodmask_icon)
-                .setContent(view)
                 .setContentIntent(contentIntent)
                 .build()
         }

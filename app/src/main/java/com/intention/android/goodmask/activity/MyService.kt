@@ -15,6 +15,8 @@ import com.intention.android.goodmask.R
 import com.intention.android.goodmask.fragment.HomeFragment
 
 class MyService : Service() {
+    private lateinit var msg: String
+
     companion object {
         const val NOTIFICATION_ID = 10
         const val CHANNEL_ID = "notification channel"
@@ -43,10 +45,15 @@ class MyService : Service() {
         channelRegister()
         val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
 
+        msg = "미세먼지 $status"
+        if(status == "나쁨" || status == "매우 나쁨") {
+            msg = "미세먼지 수치가 $status 이므로 펜 세기를 높여보세요."
+        }
         // 오레오 버전 이상 (요즘 안드로이드는 다 오레오 버전 이상임)
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentText("현재위치 $address 의 미세먼지 정도는 $status 입니다.")
+                .setContentTitle("현재위치 $address")
+                .setContentText(msg)
                 .setSmallIcon(R.drawable.goodmask_icon)
                 .setContentIntent(contentIntent)
                 .build()
@@ -54,7 +61,8 @@ class MyService : Service() {
         // 오레오 버전 미만
         else {
             NotificationCompat.Builder(this)
-                .setContentTitle("현재위치 $address 의 미세먼지 정도는 $status 입니다.")
+                .setContentTitle("현재위치 $address")
+                .setContentText(msg)
                 .setSmallIcon(R.drawable.goodmask_icon)
                 .setContentIntent(contentIntent)
                 .build()

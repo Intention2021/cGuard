@@ -79,7 +79,7 @@ class HomeFragment : Fragment() {
                 getNewLocation(retrofit)
             }
 
-        }, 600000, 600000)
+        }, 3600000, 3600000)
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -176,7 +176,6 @@ class HomeFragment : Fragment() {
 
                 override fun onFailure(call: Call<StationInfo>, t: Throwable) {
                     Log.d("onFailure in Station", t.message!!)
-                    dataToService("좋음")
                     Toast.makeText(context, "측정소 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                 }
             })
@@ -249,31 +248,31 @@ class HomeFragment : Fragment() {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_skyblue_btn)
                 binding.imageView2.setBackgroundResource(R.drawable.smile)
                 binding.dust2.text = "매우 좋음"
-                status = binding.dust2.toString()
+                status = binding.dust2.text.toString()
             }
             in 16..30 -> {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_green)
                 binding.imageView2.setBackgroundResource(R.drawable.smile)
                 binding.dust2.text = "좋음"
-                status = binding.dust2.toString()
+                status = binding.dust2.text.toString()
             }
             in 31..80 -> {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_yellow_btn)
                 binding.imageView2.setBackgroundResource(R.drawable.sceptic)
                 binding.dust2.text = "보통"
-                status = binding.dust2.toString()
+                status = binding.dust2.text.toString()
             }
             in 81..150 -> {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_orange_btn)
                 binding.imageView2.setBackgroundResource(R.drawable.bad)
                 binding.dust2.text = "나쁨"
-                status = binding.dust2.toString()
+                status = binding.dust2.text.toString()
             }
             else -> {
                 binding.locationLayout.setBackgroundResource(R.drawable.rounded_red_btn)
                 binding.imageView2.setBackgroundResource(R.drawable.angry)
                 binding.dust2.text = "매우 나쁨"
-                status = binding.dust2.toString()
+                status = binding.dust2.text.toString()
             }
         }
         return status

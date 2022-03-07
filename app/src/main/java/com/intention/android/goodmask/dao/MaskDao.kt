@@ -20,4 +20,7 @@ interface MaskDao {
 
     @Query("DELETE from mask")
     fun deleteAll()
+
+    @Query("SELECT * FROM mask WHERE name LIKE :searchName")
+    fun findMaskWithName(searchName : String) : MaskData
 }

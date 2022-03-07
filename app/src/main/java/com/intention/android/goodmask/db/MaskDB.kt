@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.intention.android.goodmask.dao.MaskDao
 import com.intention.android.goodmask.model.MaskData
 
-@Database(entities = [MaskData::class], version = 1)
+@Database(entities = [MaskData::class], version = 2)
 abstract class MaskDB: RoomDatabase() {
     abstract fun MaskDao(): MaskDao
 

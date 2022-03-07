@@ -32,6 +32,7 @@ import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.model.MaskData
 import android.os.Build
 import android.os.Parcelable
+import java.sql.Timestamp
 
 
 class DeviceActivity : AppCompatActivity() {
@@ -133,7 +134,18 @@ class DeviceActivity : AppCompatActivity() {
         maskDB = MaskDB.getInstance(this)
         val r = Runnable {
             maskList = maskDB?.MaskDao()!!.getAll()
+            Log.d("데이터베이스", "${maskList.size}")
+            if(maskList.size > 0){
+                val inten = Intent(applicationContext, MainActivity::class.java)
+                startActivity(inten)
+                finish()
+            }
         }
+        val thread = Thread(r)
+        thread.start()
+
+
+
 
         binding = ActivityDeviceBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -155,7 +167,22 @@ class DeviceActivity : AppCompatActivity() {
                     val inten = Intent(applicationContext, MainActivity::class.java)
                     inten.putExtra("device", device)
                     deContoller.deController.cancel()
+
+                    val r = Runnable {
+                        Log.d("데이터","${maskDB?.MaskDao()?.findMaskWithName(device.name)?.name} ++ ${device.name}")
+                        if(maskDB?.MaskDao()?.findMaskWithName(device.name)?.name != device.name){
+                            maskDB?.MaskDao()?.insert(MaskData(device.address, device.name, 0, Timestamp(System.currentTimeMillis()).toString(), Timestamp(System.currentTimeMillis()).toString()))
+                        }
+                        var list = maskDB?.MaskDao()?.getAll()
+                        list?.forEach {
+                            Log.d("데이터베이스", "${it.name} + ${it.address}")
+                        }
+                    }
+                    val thread = Thread(r)
+                    thread.start()
+
                     startActivity(inten)
+                    finish()
                 }
                 else {
                     deContoller.deController.cancel()
@@ -204,6 +231,28 @@ class DeviceActivity : AppCompatActivity() {
                 finish()
             }, 0)
         }
+    }
+
+    private fun checkMask() {
+        maskDB = MaskDB.getInstance(this)
+
+        val r = Runnable {
+            val savedMask = maskDB!!.MaskDao().getAll()
+            Log.d("MaskDB", "maskDB : $savedMask[0]")
+            if(savedMask.isNotEmpty()){
+
+                for(dev in leDeviceListAdapter.items!!){
+                    if(dev.name == savedMask[0].name){
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.putExtra("device", dev)
+                        startActivity(intent)
+                        finish()
+                    }
+                }
+            }
+        }
+        val thread = Thread(r)
+        thread.start()
     }
 
     private val SCAN_PERIOD: Long = 10000

@@ -107,7 +107,6 @@ class DeviceActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        bluetoothAdapter?.startDiscovery()
         packageManager.takeIf { it.missingSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) }?.also {
             Toast.makeText(this,"기기가 블루투스를 지원하지 않아 디바이스 등록이 불가합니다.", Toast.LENGTH_SHORT).show()
             deviceConnectivity = false
@@ -164,7 +163,6 @@ class DeviceActivity : AppCompatActivity() {
                     }
                     val thread = Thread(r)
                     thread.start()
-                    thread.destroy()
 
                     deContoller.deController.cancel()
                     connectingDialog.hide()
@@ -207,6 +205,7 @@ class DeviceActivity : AppCompatActivity() {
 
     // device scan
     private fun scanDevice() {
+        leDeviceListAdapter.items!!.clear()
         bluetoothAdapter?.startDiscovery()
         load.visibility = View.VISIBLE
         val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
@@ -215,7 +214,8 @@ class DeviceActivity : AppCompatActivity() {
         }
         Handler().postDelayed({
             load.visibility = View.GONE
-        }, 5000)
+        }, 3000)
+        leDeviceListAdapter.notifyDataSetChanged()
     }
 
     override fun onBackPressed() {

@@ -35,7 +35,7 @@ class DeviceController(
         }
         if (flag) {
             deController.start()
-            deController.write("abcdefg".toByteArray())
+            deController.write("hello world".toByteArray())
         }
     }
 
@@ -56,6 +56,10 @@ class DeviceController(
                     Log.d("제발", "Input stream was disconnected", e)
                     break
                 }
+                when(numBytes.toString()){
+
+                }
+
                 Log.d("제발", "read : "+numBytes.toString())
 
                 // Send the obtained bytes to the UI activity.
@@ -69,7 +73,7 @@ class DeviceController(
         // Call this from the main activity to send data to the remote device.
         fun write(bytes: ByteArray) {
             try {
-                Log.d("제발", "write : " + bytes.toString())
+                Log.d("제발", "write : " + String(bytes))
                 mmOutStream.write(bytes)
             } catch (e: IOException) {
                 Log.e("제발", "Error occurred when sending data", e)

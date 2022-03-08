@@ -1,8 +1,10 @@
 package com.intention.android.goodmask.activity
 
-import DeviceController
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
@@ -20,14 +22,23 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.ActivityMainBinding
+import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
+import com.intention.android.goodmask.model.MaskData
 import java.io.IOException
 import java.util.*
+import java.io.UnsupportedEncodingException
+import DeviceController
+import android.content.Intent
+import android.os.Message
 
 
 class MainActivity : AppCompatActivity() {
+
+    var maskDB : MaskDB? = null
+
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
@@ -39,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private var device : BluetoothDevice? = null
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
+    public lateinit var bluetoothHandler :Handler
 
 
     // 권한 목록
@@ -49,15 +61,69 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        maskDB = MaskDB.getInstance(this)
 
-        deviceController = DeviceController(Handler(), device!!)
-
-        if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         allowPermissions()
+
+        if (intent.getParcelableArrayExtra("device") != null) {
+            device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        }
+        else {
+            var name : MutableList<MaskData>? = null
+            val r = Runnable {
+                name = maskDB!!.MaskDao().getAll()
+            }
+            val thread = Thread(r)
+            thread.start()
+            val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
+                val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+                bluetoothManager.adapter
+            }
+            var connect = false
+            val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
+            pairedDevices?.forEach {
+                Log.d("기기","device 기!: ${it.name}")
+                if(name != null){
+                    if (it.name == name!![0].name){
+                        device = it
+                        connect = true
+                    }
+                }
+            }
+            if(connect == false){
+                val r = Runnable {
+                    maskDB!!.MaskDao().deleteAll()
+                }
+                Thread(r).start()
+                startActivity(Intent(this, DeviceActivity::class.java))
+                finish()
+            }
+
+        }
+        Log.d("기기","device : ${device?.name}")
+        deviceController = DeviceController(Handler(), device!!)
+        if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
+        else Toast.makeText(this, "${deviceController.device.name}가 연결되지 않습니다.", Toast.LENGTH_LONG).show()
+
+        bluetoothHandler = object : Handler() {
+            override fun handleMessage(msg: Message) {
+                if (msg.what == 2) {
+                    var readMessage: String? = null
+                    try {
+                        readMessage = String((msg.obj as ByteArray)!!, Charsets.UTF_8)
+                    } catch (e: UnsupportedEncodingException) {
+                        e.printStackTrace()
+                    }
+                    when(readMessage){
+
+                    }
+                }
+            }
+        }
+
         binding.bnvMain.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.frag_homeground -> {

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.github.mikephil.charting.charts.BarChart
@@ -19,10 +20,20 @@ import com.github.mikephil.charting.interfaces.datasets.IBarDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragStaticsBinding
+import com.intention.android.goodmask.util.CustomMarkerView
 
 class StaticsFragment : Fragment() {
     private var _binding: FragStaticsBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var dayUseTV : TextView
+    private lateinit var weekUseTV : TextView
+    private lateinit var monthUseTV : TextView
+
+    private var dayUseTime : Int = 0
+    private var weekUseTime : Int = 0
+    private var monthUseTime : Int = 0
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -31,7 +42,9 @@ class StaticsFragment : Fragment() {
         _binding = FragStaticsBinding.inflate(inflater, container, false)
         val view = binding.root
 
-
+        dayUseTV = binding.monthUsageTime
+        weekUseTV = binding.dayUsageTime
+        monthUseTV = binding.monthUsageTime2
 
         var uChart : BarChart = binding.usageChart
 
@@ -41,6 +54,7 @@ class StaticsFragment : Fragment() {
     }
 
     fun makeChart(uChart : BarChart, view: View){
+        val currentDay = 3
         val entries = ArrayList<BarEntry>()
         entries.add(BarEntry(1.0f,3.0f))
         entries.add(BarEntry(2.0f,5.0f))
@@ -50,19 +64,29 @@ class StaticsFragment : Fragment() {
         entries.add(BarEntry(6.0f,1.0f))
         entries.add(BarEntry(7.0f,10.0f))
 
+        dayUseTime = entries[currentDay].y.toInt()
+        entries.forEach {
+            weekUseTime += it.y.toInt()
+        }
+        monthUseTime = weekUseTime
+
+        dayUseTV.text = dayUseTime.toString() + "시간"
+        weekUseTV.text = weekUseTime.toString() + "시간"
+        monthUseTV.text = monthUseTime.toString() + "시간"
+
+        val cMarker = CustomMarkerView(context, layoutResource = R.layout.chart_marker)
+
         uChart.run {
             setOnChartValueSelectedListener(object : OnChartValueSelectedListener{
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
-
                 }
 
                 override fun onNothingSelected() {
-                    TODO("Not yet implemented")
                 }
 
             })
+            marker = cMarker
             description.isEnabled = false
-            valuesToHighlight()
             setMaxVisibleValueCount(7)
             setPinchZoom(false)
             setDrawBarShadow(false)

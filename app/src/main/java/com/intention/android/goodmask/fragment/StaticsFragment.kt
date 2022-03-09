@@ -55,6 +55,7 @@ class StaticsFragment : Fragment() {
 
     fun makeChart(uChart : BarChart, view: View){
         val currentDay = 3
+        weekUseTime = 0
         val entries = ArrayList<BarEntry>()
         entries.add(BarEntry(1.0f,3.0f))
         entries.add(BarEntry(2.0f,5.0f))

@@ -1,21 +1,21 @@
 package com.intention.android.goodmask.activity
 
-import android.app.*
-import android.app.Service.*
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import android.widget.RemoteViews
-import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import com.intention.android.goodmask.R
-import com.intention.android.goodmask.fragment.HomeFragment
 
 class MyService : Service() {
     private lateinit var msg: String
+    public var address : String = ""
+    public var status : String = ""
 
     companion object {
         const val NOTIFICATION_ID = 10
@@ -34,8 +34,8 @@ class MyService : Service() {
         }
         // 받아오면 foreground 실행
         else {
-            val address = intent.getStringExtra("address")
-            val status = intent.getStringExtra("dustStatus")
+            address = intent.getStringExtra("address")!!
+            status = intent.getStringExtra("dustStatus")!!
             startNotification(address.toString(), status.toString())
         }
         return super.onStartCommand(intent, flags, startId)

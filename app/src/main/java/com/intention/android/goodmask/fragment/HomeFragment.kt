@@ -24,16 +24,17 @@ import com.intention.android.goodmask.activity.MyService
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.stationData.StationInfo
-import org.locationtech.proj4j.CRSFactory
-import java.util.*
-import org.locationtech.proj4j.ProjCoordinate
-
 import org.locationtech.proj4j.BasicCoordinateTransform
-
-import retrofit2.*
+import org.locationtech.proj4j.CRSFactory
+import org.locationtech.proj4j.ProjCoordinate
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.util.*
 
 
 class HomeFragment : Fragment() {
@@ -208,7 +209,7 @@ class HomeFragment : Fragment() {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
                         binding.dust.text = "미세먼지 치수: $dustNum"
                         val status: String = setDustUI(dustNum!!.toInt())
-                        // 서비스 클래스로 데이텉 전송
+                        // 서비스 클래스로 데이터 전송
                         dataToService(status)
                     }
                     // 가장 가까운 측정소가 점검중일때 다음으로 가까운 측정소에 접근

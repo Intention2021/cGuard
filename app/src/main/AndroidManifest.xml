@@ -39,6 +39,8 @@
         <activity android:name=".activity.DeviceActivity" />
 
         <service android:name=".activity.MyService" />
+        <service android:name=".util.BleService"/>
+
     </application>
 
 </manifest>

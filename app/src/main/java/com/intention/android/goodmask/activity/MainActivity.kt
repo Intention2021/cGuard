@@ -1,19 +1,16 @@
 package com.intention.android.goodmask.activity
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothManager
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -26,13 +23,7 @@ import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
-import com.intention.android.goodmask.model.MaskData
-import java.io.IOException
 import java.util.*
-import java.io.UnsupportedEncodingException
-import DeviceController
-import android.content.Intent
-import android.os.Message
 
 
 class MainActivity : AppCompatActivity() {
@@ -42,7 +33,6 @@ class MainActivity : AppCompatActivity() {
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
-    lateinit var deviceController : DeviceController
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
@@ -68,77 +58,21 @@ class MainActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         allowPermissions()
 
-        if (intent.getParcelableArrayExtra("device") != null) {
-            device = intent.getParcelableExtra<BluetoothDevice>("device")!!
-        }
-        else {
-            var name : MutableList<MaskData>? = null
-            val r = Runnable {
-                name = maskDB!!.MaskDao().getAll()
-            }
-            val thread = Thread(r)
-            thread.start()
-            val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
-                val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-                bluetoothManager.adapter
-            }
-            var connect = false
-            val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
-            pairedDevices?.forEach {
-                Log.d("기기","device 기!: ${it.name}")
-                if(name != null){
-                    if (it.name == name!![0].name){
-                        device = it
-                        connect = true
-                    }
-                }
-            }
-            if(connect == false){
-                val r = Runnable {
-                    maskDB!!.MaskDao().deleteAll()
-                }
-                Thread(r).start()
-                startActivity(Intent(this, DeviceActivity::class.java))
-                finish()
-            }
-
-        }
+        device = intent.getParcelableExtra<BluetoothDevice>("device")!!
         Log.d("기기","device : ${device?.name}")
-        deviceController = DeviceController(Handler(), device!!)
-        if(deviceController.btSocket!!.isConnected) Toast.makeText(this, "${deviceController.device.name}가 연결되었습니다.", Toast.LENGTH_LONG).show()
-        else Toast.makeText(this, "${deviceController.device.name}가 연결되지 않습니다.", Toast.LENGTH_LONG).show()
-
-        bluetoothHandler = object : Handler() {
-            override fun handleMessage(msg: Message) {
-                if (msg.what == 2) {
-                    var readMessage: String? = null
-                    try {
-                        readMessage = String((msg.obj as ByteArray)!!, Charsets.UTF_8)
-                    } catch (e: UnsupportedEncodingException) {
-                        e.printStackTrace()
-                    }
-                    when(readMessage){
-
-                    }
-                }
-            }
-        }
 
         binding.bnvMain.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.frag_homeground -> {
                     replaceFragment(homeFragment)
-                    deviceController.deController.write("homefrag".toByteArray())
                     true
                 }
                 R.id.frag_stat -> {
-                    deviceController.deController.write("statfrag".toByteArray())
                     replaceFragment(staticsFragment)
                     true
                 }
 
                 R.id.frag_masks -> {
-                    deviceController.deController.write("maskfrag".toByteArray())
                     replaceFragment(maskFragment)
                     true
                 }
@@ -193,7 +127,8 @@ class MainActivity : AppCompatActivity() {
                         val splitedAddr = addr.getAddressLine(0).split(" ")
                         addressList = splitedAddr
                     }
-                    addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
+                    Log.d("Test", "${addressList}")
+                    addressInfo = "${addressList[0]} ${addressList[1]} ${addressList[2]}"
                     Log.d("Test", addressInfo)
                     dataToFragHome(latitude, longtitude, addressInfo)
                     replaceFragment(homeFragment)

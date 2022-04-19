@@ -2,36 +2,28 @@ package com.intention.android.goodmask.activity
 
 import DeviceController
 import android.Manifest
-import android.app.ListActivity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Geocoder
-import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
 import com.intention.android.goodmask.adapter.BleListAdapter
 import com.intention.android.goodmask.databinding.ActivityDeviceBinding
-import com.intention.android.goodmask.model.Constant.Companion.REQUEST_ENABLE_BT
-import java.util.*
-import android.content.IntentFilter
-import android.content.BroadcastReceiver
-import android.opengl.Visibility
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.intention.android.goodmask.db.MaskDB
+import com.intention.android.goodmask.model.Constant.Companion.REQUEST_ENABLE_BT
 import com.intention.android.goodmask.model.MaskData
-import android.os.Build
-import android.os.Parcelable
 import java.sql.Timestamp
 
 
@@ -40,7 +32,7 @@ class DeviceActivity : AppCompatActivity() {
     private var maskDB : MaskDB? = null
     private var maskList = mutableListOf<MaskData>()
 
-    private var deviceConnectivity: Boolean = true
+    private var deviceConnectivity: Boolean = false
     private var handler = Handler()
     private var deviceID: String = ""
     private lateinit var load : ConstraintLayout
@@ -52,6 +44,7 @@ class DeviceActivity : AppCompatActivity() {
     }
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+
             val action = intent.action
             if(BluetoothDevice.ACTION_FOUND == action) {
                 val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
@@ -132,20 +125,6 @@ class DeviceActivity : AppCompatActivity() {
         registerReceiver(mReceiver, filter)
 
         maskDB = MaskDB.getInstance(this)
-        val r = Runnable {
-            maskList = maskDB?.MaskDao()!!.getAll()
-            Log.d("데이터베이스", "${maskList.size}")
-            if(maskList.size > 0){
-                val inten = Intent(applicationContext, MainActivity::class.java)
-                startActivity(inten)
-                finish()
-            }
-        }
-        val thread = Thread(r)
-        thread.start()
-
-
-
 
         binding = ActivityDeviceBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -162,16 +141,34 @@ class DeviceActivity : AppCompatActivity() {
         var deviceBLE = binding.deviceList
         leDeviceListAdapter.setItemClickListener(object : BleListAdapter.ItemClickListener{
             override fun onClick(view: View, device: BluetoothDevice?, position:Int) {
+                val intent = Intent(applicationContext, MainActivity::class.java)
+                intent.putExtra("device", device)
+                Toast.makeText(applicationContext, "${device?.name}에 연결합니다.", Toast.LENGTH_LONG).show()
+                startActivity(intent)
                 val deContoller : DeviceController = DeviceController(Handler(), device!!)
-                if(deContoller.btSocket!!.isConnected){
+
+                if(deContoller.btSocket!!.isConnected) {
                     val inten = Intent(applicationContext, MainActivity::class.java)
                     inten.putExtra("device", device)
                     deContoller.deController.cancel()
 
                     val r = Runnable {
-                        Log.d("데이터","${maskDB?.MaskDao()?.findMaskWithName(device.name)?.name} ++ ${device.name}")
-                        if(maskDB?.MaskDao()?.findMaskWithName(device.name)?.name != device.name){
-                            maskDB?.MaskDao()?.insert(MaskData(device.address, device.name, 0, Timestamp(System.currentTimeMillis()).toString(), Timestamp(System.currentTimeMillis()).toString()))
+                        Log.d(
+                            "데이터",
+                            "${
+                                maskDB?.MaskDao()?.findMaskWithName(device.name)?.name
+                            } ++ ${device.name}"
+                        )
+                        if (maskDB?.MaskDao()?.findMaskWithName(device.name)?.name != device.name) {
+                            maskDB?.MaskDao()?.insert(
+                                MaskData(
+                                    device.address,
+                                    device.name,
+                                    0,
+                                    Timestamp(System.currentTimeMillis()).toString(),
+                                    Timestamp(System.currentTimeMillis()).toString()
+                                )
+                            )
                         }
                         var list = maskDB?.MaskDao()?.getAll()
                         list?.forEach {
@@ -184,6 +181,10 @@ class DeviceActivity : AppCompatActivity() {
                     startActivity(inten)
                     finish()
                 }
+//                ble connect
+//                else if (){
+//
+//                }
                 else {
                     deContoller.deController.cancel()
                     Toast.makeText(applicationContext, "${device.name}이 연결되지 않습니다.", Toast.LENGTH_LONG).show()
@@ -198,6 +199,7 @@ class DeviceActivity : AppCompatActivity() {
     private fun scanDevice() {
         leDeviceListAdapter.items?.clear()
         bluetoothAdapter?.startDiscovery()
+        scanLeDevice(true)
         load.visibility = View.VISIBLE
         val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
         pairedDevices?.forEach { device ->
@@ -224,7 +226,7 @@ class DeviceActivity : AppCompatActivity() {
 
     // device가 연결되어 있는지 확인
     public fun checkDeviceConnectivity(deviceID: String) {
-        if (!deviceConnectivity) {
+        if (deviceConnectivity) {
             handler.postDelayed({
                 var intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
@@ -272,8 +274,9 @@ class DeviceActivity : AppCompatActivity() {
                 if(existence) {
                     leDeviceListAdapter.addDevice(device)
                     Log.d("제발나와라ㅇㅖ~~","items : ${leDeviceListAdapter.items}")
+                    leDeviceListAdapter.notifyDataSetChanged()
                 }
-                leDeviceListAdapter.notifyDataSetChanged()
+
         }
 
         bluetoothAdapter?.startDiscovery()

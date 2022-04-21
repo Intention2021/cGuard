@@ -35,7 +35,6 @@ class MaskFragment : Fragment() {
 
         maskFanPower = binding.seekBar
         maskFanPowerText = binding.fanTitle
-        disConBtn = binding.disconnectBtn
 
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
@@ -44,16 +43,6 @@ class MaskFragment : Fragment() {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
         })
-
-        disConBtn.setOnClickListener {
-            val maskDB = context?.let { it1 -> MaskDB.getInstance(it1) }
-            val r = Runnable {
-                maskDB!!.MaskDao().deleteAll()
-            }
-            Thread(r).start()
-            startActivity(Intent(context, DeviceActivity::class.java))
-            activity?.finish()
-        }
 
         return view
     }

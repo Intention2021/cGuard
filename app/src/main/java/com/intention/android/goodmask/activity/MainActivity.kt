@@ -57,8 +57,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         allowPermissions()
+        getLocation()
 
-        device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        if (intent.getParcelableExtra<BluetoothDevice>("device") != null){
+            device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        }
         Log.d("기기","device : ${device?.name}")
 
         binding.bnvMain.setOnItemSelectedListener { item ->
@@ -69,11 +72,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.frag_stat -> {
                     replaceFragment(staticsFragment)
-                    true
-                }
-
-                R.id.frag_masks -> {
-                    replaceFragment(maskFragment)
                     true
                 }
                 else -> false
@@ -128,7 +126,8 @@ class MainActivity : AppCompatActivity() {
                         addressList = splitedAddr
                     }
                     Log.d("Test", "${addressList}")
-                    addressInfo = "${addressList[0]} ${addressList[1]} ${addressList[2]}"
+                    val addressListLength = addressList.size - 1
+                    addressInfo = "${addressList[addressListLength - 2]} ${addressList[addressListLength - 1]} ${addressList[addressListLength]}"
                     Log.d("Test", addressInfo)
                     dataToFragHome(latitude, longtitude, addressInfo)
                     replaceFragment(homeFragment)
@@ -143,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         bundle.putDouble("latitude", lat)
         bundle.putDouble("longitude", long)
         bundle.putString("address", addressInfo)
+        bundle.putParcelable("device", device)
         homeFragment.arguments = bundle
     }
 

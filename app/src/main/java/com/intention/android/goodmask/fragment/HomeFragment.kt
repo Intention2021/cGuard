@@ -1,29 +1,43 @@
 package com.intention.android.goodmask.fragment
 
 import android.Manifest
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.gson.GsonBuilder
 import com.intention.android.goodmask.R
-import com.intention.android.goodmask.activity.MyService
+import com.intention.android.goodmask.activity.BleService
+import com.intention.android.goodmask.activity.DeviceActivity
+import com.intention.android.goodmask.activity.MainActivity
+import com.intention.android.goodmask.activity.SplashActivity
+import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.databinding.FragHomeBinding
+import com.intention.android.goodmask.databinding.FragMaskBinding
+import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.stationData.StationInfo
+import com.intention.android.goodmask.viewmodel.BleViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.locationtech.proj4j.BasicCoordinateTransform
 import org.locationtech.proj4j.CRSFactory
 import org.locationtech.proj4j.ProjCoordinate
@@ -34,36 +48,52 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.text.SimpleDateFormat
 import java.util.*
 
 
 class HomeFragment : Fragment() {
-    private var _binding: FragHomeBinding? = null
-    private val binding get() = _binding!!
+
+    private val viewModel by viewModel<BleViewModel>()
+    private var device : BluetoothDevice? = null
+    private lateinit var binding : FragHomeBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     lateinit var maskFanPower: SeekBar
     lateinit var maskFanPowerText: TextView
+    lateinit var disConBtn : Button
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
+    var registerState : Boolean = false
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragHomeBinding.inflate(inflater, container, false)
+
+        binding = DataBindingUtil.inflate(inflater, R.layout.frag_home, container,false)
+        binding.viewModel = viewModel
         val view = binding.root
+        viewModel.registBroadCastReceiver()
+        registerState = true
+
         address = arguments?.getString("address").toString()
         val lat = arguments?.getDouble("latitude")
         val long = arguments?.getDouble("longitude")
 
         maskFanPower = binding.seekBar
         maskFanPowerText = binding.fanTitle
-        val (tmX, tmY) = setWGS84TM(lat!!, long!!)
-
-        Log.d("TM_XY", "$tmX / $tmY")
-
+        disConBtn = binding.disconnectBtn
+        disConBtn.setOnClickListener {
+            viewModel.onClickDisconnect()
+            viewModel.unregisterReceiver()
+            registerState = false
+            context?.stopService(Intent(context, BleService::class.java))
+            context?.startActivity(Intent(context, DeviceActivity::class.java))
+            activity?.finish()
+        }
         val gson = GsonBuilder().setLenient().create()
 
         val retrofit = Retrofit.Builder()
@@ -71,6 +101,9 @@ class HomeFragment : Fragment() {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
+
+        val (tmX, tmY) = setWGS84TM(lat!!, long!!)
+        Log.d("TM_XY", "$tmX / $tmY")
         getDustInfo(retrofit, tmX, tmY)
 
         // 정해진 시간마다 업데이트
@@ -85,6 +118,7 @@ class HomeFragment : Fragment() {
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 maskFanPowerText.text = "팬 세기\n" + p1.toString()
+                viewModel.onClickWrite()
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -97,7 +131,19 @@ class HomeFragment : Fragment() {
         binding.refreshBtn.setOnClickListener {
             getNewLocation(retrofit)
         }
+
+        initObserver(binding)
+
         return view
+    }
+
+    private fun initObserver(binding: FragHomeBinding?) {
+        viewModel.readTxt?.observe(this,{
+            val now = System.currentTimeMillis()
+            val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+            val timestamp = datef.format(Date(now))
+            Log.d("read","read data : [${timestamp}]\t$it\n")
+        })
     }
 
     // 새로고침 시 새 주소 출력
@@ -132,7 +178,9 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        if(registerState){
+            viewModel.unregisterReceiver()
+        }
     }
 
     // 위/경도 -> TM좌표로 변환
@@ -156,6 +204,10 @@ class HomeFragment : Fragment() {
         val TM_y = tmp.split(" ")[1].toDouble()
         val TMInfo = Pair(TM_x, TM_y)
         return TMInfo
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
     // 가장 가까운 측정소를 구하고 미세먼지 농도 데이터 가져오기
@@ -182,17 +234,28 @@ class HomeFragment : Fragment() {
             })
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun dataToService(status: String){
         // 포그라운드 데이터 전달 위함
-        val intent = Intent(context, MyService::class.java)
+        val intent = Intent(context, BleService::class.java)
         intent.putExtra("address", address)
         Log.e("Give Address", "데이터 전달 $address")
         Log.e("Home to Service Status", status)
         intent.putExtra("dustStatus", status)
+
+        if (arguments?.getParcelable<BluetoothDevice>("device") != null){
+            device = arguments?.getParcelable("device")
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context?.startForegroundService(intent)
+            if(device != null){
+                viewModel.connectDevice(device!!)
+            }
         } else{
             context?.startService(intent)
+            if(device != null){
+                viewModel.connectDevice(device!!)
+            }
         }
     }
 
@@ -201,6 +264,7 @@ class HomeFragment : Fragment() {
         val dustService: DustService? = retrofit.create(DustService::class.java)
         dustService?.getInfo(key, "json", stationName, "daily")
             ?.enqueue(object : Callback<DustInfo> {
+                @RequiresApi(Build.VERSION_CODES.O)
                 override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
                     val dustList = response.body()?.response?.body?.items
                     val dustNum = dustList?.get(0)?.pm10Value
@@ -216,6 +280,7 @@ class HomeFragment : Fragment() {
                     else {
                         dustService.getInfo(key, "json", subStation, "daily")
                             .enqueue(object : Callback<DustInfo> {
+                                @RequiresApi(Build.VERSION_CODES.O)
                                 override fun onResponse(call: Call<DustInfo>, response: Response<DustInfo>) {
                                     val subDustList = response.body()?.response?.body?.items
                                     val subDustNum = subDustList?.get(0)?.pm10Value

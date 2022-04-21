@@ -11,10 +11,4 @@
         android:enabled="true"
         android:icon="@drawable/ic_baseline_bar_chart_24"
         android:title="통계"/>
-
-    <item
-        android:id="@+id/frag_masks"
-        android:enabled="true"
-        android:icon="@drawable/medical_mask"
-        android:title="마스크"/>
 </menu>

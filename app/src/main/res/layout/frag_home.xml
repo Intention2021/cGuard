@@ -1,302 +1,334 @@
 <?xml version="1.0" encoding="utf-8"?><!--홈화면-->
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable
+            name="viewModel"
+            type="com.intention.android.goodmask.viewmodel.BleViewModel" />
+    </data>
 
-    <TextView
-        android:id="@+id/textView6"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:elevation="3dp"
-        android:layout_marginTop="18dp"
-        android:text="굿마스크"
-        android:textColor="#000"
-        android:textSize="24dp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/refreshBtn"
-        android:layout_width="24dp"
-        android:elevation="3dp"
-        android:layout_height="24dp"
-        android:clickable="true"
-        android:layout_marginTop="18dp"
-        android:layout_marginEnd="24dp"
-        android:src="@drawable/refresh"
-        android:background="?attr/selectableItemBackground"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="56dp"
-        android:orientation="vertical"
-        app:layout_constraintTop_toTopOf="parent">
+        android:background="#F5F5F5">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/locationLayout"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="15dp"
-            android:layout_weight="2"
-            android:background="@drawable/rounded_gray_btn"
+            android:layout_marginStart="24dp"
             android:elevation="3dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            android:layout_marginTop="18dp"
+            android:text="굿마스크"
+            android:textColor="#000"
+            android:textSize="24dp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center_horizontal"
-                android:text="현위치"
-                android:textColor="@color/white"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <View
-                android:id="@+id/view3"
-                android:layout_width="24dp"
-                android:layout_height="2dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/white"
-                android:foregroundGravity="center_horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/location" />
-
-            <TextView
-                android:id="@+id/locationText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:layout_marginTop="12dp"
-                android:gravity="center_horizontal"
-                android:text="서울시 중구 명동"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.502"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/view3" />
-
-
-            <TextView
-                android:id="@+id/dust"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:layout_marginBottom="24dp"
-                android:gravity="center_horizontal"
-                android:text="미세먼지 지수 : -"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:textSize="18dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <TextView
-                android:id="@+id/dust2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:gravity="center_horizontal"
-                android:text="Loading..."
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:textColor="@color/white"
-                android:textSize="24dp"
-                app:layout_constraintBottom_toTopOf="@+id/dust"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="102dp"
-                android:layout_height="102dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="24dp"
-                android:foregroundGravity="center_horizontal"
-                app:layout_constraintBottom_toTopOf="@+id/dust2"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/locationText" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/refreshBtn"
+            android:layout_width="24dp"
+            android:elevation="3dp"
+            android:layout_height="24dp"
+            android:clickable="true"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="24dp"
+            android:src="@drawable/refresh"
+            android:background="?attr/selectableItemBackground"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_weight="1"
-            android:baselineAligned="false"
-            android:layout_marginBottom="12dp"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:layout_marginTop="56dp"
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/locationLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:elevation="3dp"
-                android:layout_gravity="center_vertical"
                 android:layout_marginStart="15dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/rounded_white_btn">
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="15dp"
+                android:layout_weight="2"
+                android:background="@drawable/rounded_gray_btn"
+                android:elevation="3dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:textColor="@color/black"
-                    android:id="@+id/batteryText"
+                    android:id="@+id/location"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="18dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
                     android:gravity="center_horizontal"
-                    android:textStyle="bold"
-                    android:text="베터리 잔량"
+                    android:text="현위치"
+                    android:textColor="@color/white"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <View
-                    android:id="@+id/batteryView"
-                    android:layout_width="36dp"
+                    android:id="@+id/view3"
+                    android:layout_width="24dp"
                     android:layout_height="2dp"
                     android:layout_marginTop="12dp"
-                    android:background="#FFC063"
+                    android:background="@color/white"
                     android:foregroundGravity="center_horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/batteryText" />
+                    app:layout_constraintTop_toBottomOf="@+id/location" />
 
                 <TextView
-                    android:textColor="@color/black"
-                    android:id="@+id/batteryPercent"
+                    android:id="@+id/locationText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_horizontal"
+                    android:text="서울시 중구 명동"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.502"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/view3" />
+
+
+                <TextView
+                    android:id="@+id/dust"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
                     android:layout_marginBottom="24dp"
                     android:gravity="center_horizontal"
-                    android:text="50%"
+                    android:text="미세먼지 지수 : -"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:textSize="18dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/batteryView" />
+                    app:layout_constraintStart_toStartOf="parent" />
 
+                <TextView
+                    android:id="@+id/dust2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_horizontal"
+                    android:text="Loading..."
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:textColor="@color/white"
+                    android:textSize="24dp"
+                    app:layout_constraintBottom_toTopOf="@+id/dust"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="102dp"
+                    android:layout_height="102dp"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="24dp"
+                    android:foregroundGravity="center_horizontal"
+                    app:layout_constraintBottom_toTopOf="@+id/dust2"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/locationText" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_weight="1.7"
+                android:baselineAligned="false"
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:elevation="3dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/rounded_white_btn">
+
+                    <TextView
+                        android:textColor="@color/black"
+                        android:id="@+id/batteryText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18dp"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_horizontal"
+                        android:textStyle="bold"
+                        android:text="베터리 잔량"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:id="@+id/batteryView"
+                        android:layout_width="36dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="12dp"
+                        android:background="#FFC063"
+                        android:foregroundGravity="center_horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/batteryText" />
+
+                    <TextView
+                        android:textColor="@color/black"
+                        android:id="@+id/batteryPercent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:layout_marginBottom="24dp"
+                        android:gravity="center_horizontal"
+                        android:text="50%"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/batteryView" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_height="match_parent"
+                    android:elevation="3dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/rounded_white_btn">
+
+                    <TextView
+                        android:textColor="@color/black"
+                        android:id="@+id/filterText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_horizontal"
+                        android:textStyle="bold"
+                        android:textSize="18dp"
+                        android:text="필터 교체"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:id="@+id/filterView"
+                        android:layout_width="36dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="12dp"
+                        android:background="#FFC063"
+                        android:foregroundGravity="center_horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/filterText" />
+
+                    <TextView
+                        android:textColor="@color/black"
+                        android:id="@+id/filterDay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:layout_marginBottom="24dp"
+                        android:gravity="center_horizontal"
+                        android:text="D-4"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/filterView" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/fanLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:elevation="3dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="15dp"
                 android:layout_marginEnd="15dp"
-                android:layout_weight="1"
-                android:background="@drawable/rounded_white_btn">
+                android:elevation="3dp"
+                android:layout_marginBottom="12dp"
+                android:layout_weight="1.5"
+                android:background="@drawable/rounded_white_btn"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
 
                 <TextView
                     android:textColor="@color/black"
-                    android:id="@+id/filterText"
+                    android:id="@+id/fanTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:gravity="center_horizontal"
                     android:textStyle="bold"
                     android:textSize="18dp"
-                    android:text="필터 교체"
+                    android:gravity="center_horizontal"
+                    android:text="팬 세기\n0"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <View
-                    android:id="@+id/filterView"
-                    android:layout_width="36dp"
-                    android:layout_height="2dp"
-                    android:layout_marginTop="12dp"
-                    android:background="#FFC063"
-                    android:foregroundGravity="center_horizontal"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/filterText" />
 
-                <TextView
-                    android:textColor="@color/black"
-                    android:id="@+id/filterDay"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="24dp"
-                    android:gravity="center_horizontal"
-                    android:text="D-4"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                <SeekBar
+                    android:id="@+id/seekBar"
+                    style="@style/Widget.AppCompat.SeekBar.Discrete"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:foregroundGravity="center_horizontal"
+                    android:max="4"
+                    android:progress="0"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/filterView" />
+                    app:layout_constraintTop_toBottomOf="@+id/fanTitle" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </LinearLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/fanLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="15dp"
-            android:elevation="3dp"
-            android:layout_marginBottom="12dp"
-            android:layout_weight="1"
-            android:background="@drawable/rounded_white_btn"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <TextView
-                android:textColor="@color/black"
-                android:id="@+id/fanTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:textSize="18dp"
-                android:gravity="center_horizontal"
-                android:text="팬 세기\n0"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-
-            <SeekBar
-                android:id="@+id/seekBar"
-                style="@style/Widget.AppCompat.SeekBar.Discrete"
+            <Button
+                android:id="@+id/disconnectBtn"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginBottom="16dp"
-                android:foregroundGravity="center_horizontal"
-                android:max="4"
-                android:progress="0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="18dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginEnd="18dp"
+                android:background="@drawable/rounded_orange_btn"
+                android:text="다른 기기 연결하기"
+                android:layout_weight="1.5"
+                android:textSize="18dp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/fanTitle" />
+                app:layout_constraintTop_toTopOf="parent" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

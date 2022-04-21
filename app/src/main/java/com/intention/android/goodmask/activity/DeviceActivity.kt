@@ -2,6 +2,7 @@ package com.intention.android.goodmask.activity
 
 import DeviceController
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -10,6 +11,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -19,12 +22,18 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.intention.android.goodmask.R
 import com.intention.android.goodmask.adapter.BleListAdapter
 import com.intention.android.goodmask.databinding.ActivityDeviceBinding
+import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.model.Constant.Companion.REQUEST_ENABLE_BT
 import com.intention.android.goodmask.model.MaskData
+import retrofit2.Retrofit
 import java.sql.Timestamp
+import java.util.*
 
 
 class DeviceActivity : AppCompatActivity() {
@@ -42,6 +51,7 @@ class DeviceActivity : AppCompatActivity() {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
     }
+
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
 
@@ -61,6 +71,7 @@ class DeviceActivity : AppCompatActivity() {
             }
         }
     }
+
     lateinit var leDeviceListAdapter: BleListAdapter
     private val BluetoothAdapter.isDisabled: Boolean
         get() = !isEnabled
@@ -121,6 +132,7 @@ class DeviceActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkLocPermission()
+
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(mReceiver, filter)
 
@@ -145,55 +157,13 @@ class DeviceActivity : AppCompatActivity() {
                 intent.putExtra("device", device)
                 Toast.makeText(applicationContext, "${device?.name}에 연결합니다.", Toast.LENGTH_LONG).show()
                 startActivity(intent)
-                val deContoller : DeviceController = DeviceController(Handler(), device!!)
-
-                if(deContoller.btSocket!!.isConnected) {
-                    val inten = Intent(applicationContext, MainActivity::class.java)
-                    inten.putExtra("device", device)
-                    deContoller.deController.cancel()
-
-                    val r = Runnable {
-                        Log.d(
-                            "데이터",
-                            "${
-                                maskDB?.MaskDao()?.findMaskWithName(device.name)?.name
-                            } ++ ${device.name}"
-                        )
-                        if (maskDB?.MaskDao()?.findMaskWithName(device.name)?.name != device.name) {
-                            maskDB?.MaskDao()?.insert(
-                                MaskData(
-                                    device.address,
-                                    device.name,
-                                    0,
-                                    Timestamp(System.currentTimeMillis()).toString(),
-                                    Timestamp(System.currentTimeMillis()).toString()
-                                )
-                            )
-                        }
-                        var list = maskDB?.MaskDao()?.getAll()
-                        list?.forEach {
-                            Log.d("데이터베이스", "${it.name} + ${it.address}")
-                        }
-                    }
-                    val thread = Thread(r)
-                    thread.start()
-
-                    startActivity(inten)
-                    finish()
-                }
-//                ble connect
-//                else if (){
-//
-//                }
-                else {
-                    deContoller.deController.cancel()
-                    Toast.makeText(applicationContext, "${device.name}이 연결되지 않습니다.", Toast.LENGTH_LONG).show()
-                }
+                finish()
             }
 
         })
         deviceBLE.adapter = leDeviceListAdapter
     }
+
 
     // device scan
     private fun scanDevice() {

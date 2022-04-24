@@ -192,28 +192,6 @@ class DeviceActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkMask() {
-        maskDB = MaskDB.getInstance(this)
-
-        val r = Runnable {
-            val savedMask = maskDB!!.MaskDao().getAll()
-            Log.d("MaskDB", "maskDB : $savedMask[0]")
-            if(savedMask.isNotEmpty()){
-
-                for(dev in leDeviceListAdapter.items!!){
-                    if(dev.name == savedMask[0].name){
-                        val intent = Intent(this, MainActivity::class.java)
-                        intent.putExtra("device", dev)
-                        startActivity(intent)
-                        finish()
-                    }
-                }
-            }
-        }
-        val thread = Thread(r)
-        thread.start()
-    }
-
     private val SCAN_PERIOD: Long = 10000
     private var mScanning: Boolean = false
     private fun scanLeDevice(enable: Boolean) {

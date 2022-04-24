@@ -22,6 +22,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.gson.GsonBuilder
@@ -31,6 +33,7 @@ import com.intention.android.goodmask.activity.DeviceActivity
 import com.intention.android.goodmask.activity.SplashActivity
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.dustData.DustInfo
+import com.intention.android.goodmask.model.MaskData
 import com.intention.android.goodmask.stationData.StationInfo
 import com.intention.android.goodmask.viewmodel.BleViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -62,6 +65,7 @@ class HomeFragment : Fragment() {
     lateinit var address: String
     var registerState : Boolean = false
     var pastFanPower = 0
+    private var db : MaskDB? = null
 
     private fun registerChooser() {
         if(registerState){
@@ -85,6 +89,43 @@ class HomeFragment : Fragment() {
         val view = binding.root
         registerState = false
         registerChooser()
+
+        // 요일 1~7: 일~토
+        val day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+
+        // start는 필터 키고, end는 필터 끄는 시간으로 넘겨받으면 될듯
+        val start = System.currentTimeMillis()
+        val end = 0
+        // val newDB = MaskData("7", start, end.toLong(), 0)
+        db = MaskDB.getInstance(context?.applicationContext!!)
+
+        // 월요일에 처음으로 가동하는 경우 주간 기록을 초기화
+        /*var cycle = 0
+        if (day == "2" && cycle % 8 == 0){
+            val r = Runnable {
+                db?.MaskDao()?.deleteAll()
+                for (i in 1..7){
+                    val newDB = MaskData(i.toString(), 0, 0.toLong(), 0)
+                    db?.MaskDao()?.insert(newDB)
+                }
+            }
+            cycle++
+            val thread = Thread(r)
+            thread.start()
+        }*/
+
+        val r = Runnable {
+            // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
+            val time = db?.MaskDao()?.getTime(day)
+            // 아래부분은 시간 추가할 때 사하면 될
+            // val updateDB = MaskData(day, start, end.toLong(), 100 + time!!);
+            // db?.MaskDao()?.update(updateDB)
+
+            val data = db?.MaskDao()?.getAll()
+            Log.e("DBDBDBDBDB", data.toString())
+        }
+        val thread = Thread(r)
+        thread.start()
 
         address = arguments?.getString("address").toString()
         val lat = arguments?.getDouble("latitude")

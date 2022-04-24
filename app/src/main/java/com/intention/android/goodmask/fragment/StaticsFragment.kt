@@ -1,6 +1,7 @@
 package com.intention.android.goodmask.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +21,7 @@ import com.github.mikephil.charting.interfaces.datasets.IBarDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragStaticsBinding
+import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.util.CustomMarkerView
 
 class StaticsFragment : Fragment() {
@@ -33,6 +35,8 @@ class StaticsFragment : Fragment() {
     private var dayUseTime : Int = 0
     private var weekUseTime : Int = 0
     private var monthUseTime : Int = 0
+
+    private var db : MaskDB? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +53,25 @@ class StaticsFragment : Fragment() {
         var uChart : BarChart = binding.usageChart
 
         makeChart(uChart, view)
+
+        db = MaskDB.getInstance(context?.applicationContext!!)
+        // 일 ~ 토 순
+        var timeByDay = longArrayOf(0, 0, 0, 0, 0, 0, 0)
+        var totalTime = 0.toLong()
+        val r = Runnable {
+            // update use time (100 부분이 새로 추가될 시간, ime)
+            for (i in 1..7) {
+                timeByDay[i-1] = db?.MaskDao()?.getTime(i.toString())!!
+                totalTime += timeByDay[i-1]
+            }
+            Log.e("Total Time", totalTime.toString())
+
+            for (i in 1..7) {
+                Log.e("LIST!", timeByDay[i-1].toString() + " ")
+            }
+        }
+        val thread = Thread(r)
+        thread.start()
 
         return view
     }

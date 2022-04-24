@@ -16,7 +16,6 @@ import androidx.lifecycle.*
 import com.intention.android.goodmask.BleApplication
 import com.intention.android.goodmask.BleRepository
 import com.intention.android.goodmask.SERVICE_STRING
-import com.intention.android.goodmask.di.viewModelModule
 import com.intention.android.goodmask.util.Event
 import java.util.*
 import kotlin.collections.ArrayList
@@ -169,10 +168,9 @@ class BleViewModel(private val bleRepository: BleRepository) : ViewModel() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun onClickWrite(){
-        val cmdBytes = ByteArray(2)
-        cmdBytes[0] = 1
-        cmdBytes[1] = 2
+    fun onClickWrite(c: Char) {
+        val cmdBytes = ByteArray(1)
+        cmdBytes[0] = c.code.toByte()
         bleRepository.writeData(cmdBytes)
     }
 }

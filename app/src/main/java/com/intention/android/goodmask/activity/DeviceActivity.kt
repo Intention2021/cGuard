@@ -171,19 +171,6 @@ class DeviceActivity : AppCompatActivity() {
         bluetoothAdapter?.startDiscovery()
         scanLeDevice(true)
         load.visibility = View.VISIBLE
-        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
-        pairedDevices?.forEach { device ->
-            var existence : Boolean = false
-            for (dev in leDeviceListAdapter.items!!){
-                if(device.address == dev.address || device?.name == null){
-                    existence = true
-                    break
-                }
-            }
-            if(!existence)leDeviceListAdapter.addDevice(device)
-            val deviceName = device.name
-            val deviceHardwareAddress = device.address // MAC address
-        }
         Handler().postDelayed({
             load.visibility = View.GONE
         }, 5000)

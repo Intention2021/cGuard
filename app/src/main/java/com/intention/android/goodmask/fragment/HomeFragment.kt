@@ -65,6 +65,7 @@ class HomeFragment : Fragment() {
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
     var registerState : Boolean = false
+    var pastFanPower = 0
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
@@ -115,22 +116,49 @@ class HomeFragment : Fragment() {
 
         }, 3600000, 3600000)
 
-        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                maskFanPowerText.text = "팬 세기\n" + p1.toString()
-                viewModel.onClickWrite()
-            }
-
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
-
         Log.d("homeFrag", address.toString())
         binding.locationText.text = address
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         binding.refreshBtn.setOnClickListener {
             getNewLocation(retrofit)
         }
+
+        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                maskFanPowerText.text = "팬 세기\n${p1}"
+                when(p1){
+                    0 -> {
+                        // fan stop
+                        if(pastFanPower != 0){
+                            viewModel.onClickWrite()
+                        }
+                    }
+                    1 -> {
+                        // fan start
+                        viewModel.onClickWrite()
+                    }
+                    2 -> {
+                        // fan start
+                        viewModel.onClickWrite()
+                    }
+                    3 -> {
+                        // fan start
+                        viewModel.onClickWrite()
+                    }
+                    4 -> {
+                        // fan start
+                        viewModel.onClickWrite()
+                    }
+                }
+                pastFanPower = p1
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+            }
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+            }
+
+        })
 
         initObserver(binding)
 
@@ -142,7 +170,6 @@ class HomeFragment : Fragment() {
             val now = System.currentTimeMillis()
             val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
             val timestamp = datef.format(Date(now))
-            Log.d("read","read data : [${timestamp}]\t$it\n")
         })
     }
 

@@ -7,6 +7,7 @@ import android.util.Log
 import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_COMMAND_STRING
 import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_RESPONSE_STRING
 import com.intention.android.goodmask.model.Constant.Companion.SERVICE_STRING
+import com.intention.android.goodmask.model.Constant.Companion.SERVICE_UUID
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -59,10 +60,10 @@ class BluetoothUtils {
             uuidString: String
         ): BluetoothGattCharacteristic? {
             val serviceList = gatt.services
-            val service = findGattService(serviceList) ?: return null
-            val characteristicList = service.characteristics
-            Log.d("helloe", "character: ${characteristicList}")
-            for (characteristic in characteristicList) {
+            val service = findGattService(serviceList)
+            val characteristicList = service?.characteristics
+            Log.d("blecharacter", "character: ${characteristicList}")
+            for (characteristic in characteristicList!!) {
                 Log.d("character", "${characteristic}")
                 if (matchCharacteristic(characteristic, uuidString)) {
                     return characteristic
@@ -85,6 +86,7 @@ class BluetoothUtils {
                 return false
             }
             val uuid: UUID = characteristic.uuid
+            Log.d("UUID", "UUID : ${uuid}, uuidString : ${uuidString}")
             return matchUUIDs(uuid.toString(), uuidString)
         }
 
@@ -95,7 +97,9 @@ class BluetoothUtils {
          */
         private fun findGattService(serviceList: List<BluetoothGattService>): BluetoothGattService? {
             for (service in serviceList) {
+                Log.d("service", "service : ${service}")
                 val serviceUuidString = service.uuid.toString()
+                Log.d("service", "serviceuuidstring : ${serviceUuidString}")
                 if (matchServiceUUIDString(serviceUuidString)) {
                     return service
                 }
@@ -109,7 +113,7 @@ class BluetoothUtils {
          * @return true if service uuid is matched
          */
         private fun matchServiceUUIDString(serviceUuidString: String): Boolean {
-            return matchUUIDs(serviceUuidString, SERVICE_STRING)
+            return matchUUIDs(serviceUuidString, SERVICE_UUID)
         }
 
         /**

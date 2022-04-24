@@ -1,9 +1,6 @@
 package com.intention.android.goodmask.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.Query
+import androidx.room.*
 import com.intention.android.goodmask.model.MaskData
 import androidx.room.OnConflictStrategy.REPLACE
 
@@ -18,9 +15,12 @@ interface MaskDao {
     @Delete
     suspend fun deleteUser(maskData:MaskData)
 
+    @Update
+    fun update(maskData: MaskData)
+
+    @Query(value = "SELECT time FROM mask WHERE day = :day")
+    fun getTime(day: String): Long
+
     @Query("DELETE from mask")
     fun deleteAll()
-
-    @Query("SELECT * FROM mask WHERE name LIKE :searchName")
-    fun findMaskWithName(searchName : String) : MaskData
 }

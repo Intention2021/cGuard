@@ -13,12 +13,15 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MIN
 import com.intention.android.goodmask.*
 import com.intention.android.goodmask.util.BluetoothUtils
+import com.intention.android.goodmask.viewmodel.BleViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 
 class BleService : Service() {
     private val mBinder: IBinder = LocalBinder()
+
     private lateinit var msg: String
     public var address : String = ""
     public var status : String = ""
@@ -45,12 +48,14 @@ class BleService : Service() {
             status = intent.getStringExtra("dustStatus")!!
         }
 
+
         when (intent?.action) {
             Actions.START_FOREGROUND -> {
                 startForegroundService()
             }
             Actions.STOP_FOREGROUND -> {
                 stopForegroundService()
+
             }
             Actions.DISCONNECT_DEVICE->{
                 disconnectGattServer("Disconnected")
@@ -166,7 +171,7 @@ class BleService : Service() {
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            //Log.d(TAG, "characteristic changed: " + characteristic.uuid.toString())
+            Log.d("change", "characteristic changed: " + characteristic.uuid.toString())
             readCharacteristic(characteristic)
         }
 
@@ -229,11 +234,10 @@ class BleService : Service() {
     fun disconnectGattServer(msg: String) {
         Log.d("hereigo", "Closing Gatt connection")
         // disconnect and close the gatt
-        if (bleGatt != null) {
-            Log.d("hereigo", "${bleGatt}")
-            bleGatt!!.disconnect()
-            bleGatt!!.close()
-        }
+
+        Log.d("hereigo", "${bleGatt}")
+        bleGatt!!.disconnect()
+        bleGatt!!.close()
         Log.d("hereigo", "${bleGatt}")
         stopForegroundService()
         broadcastUpdate(Actions.GATT_DISCONNECTED, msg)
@@ -255,7 +259,7 @@ class BleService : Service() {
         if (!success) {
             Log.e(TAG, "Failed to write command")
         }
-        else Log.d("write", "write : ${cmdCharacteristic.value}")
+        else Log.d("write", "write : ${cmdCharacteristic.value.toString()}")
         bleRepository.cmdByteArray = null
 
     }

@@ -63,12 +63,16 @@ class BluetoothUtils {
             val service = findGattService(serviceList)
             val characteristicList = service?.characteristics
             Log.d("blecharacter", "character: ${characteristicList}")
-            for (characteristic in characteristicList!!) {
-                Log.d("character", "${characteristic}")
-                if (matchCharacteristic(characteristic, uuidString)) {
-                    return characteristic
+            if(characteristicList !=null){
+                for (characteristic in characteristicList!!) {
+                    Log.d("character", "${characteristic}")
+                    if (matchCharacteristic(characteristic, uuidString) && characteristic != null) {
+                        Log.d("readcmd", "hello ${characteristic}")
+                        return characteristic
+                    }
                 }
             }
+
             return null
         }
 

@@ -13,12 +13,15 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MIN
 import com.intention.android.goodmask.*
 import com.intention.android.goodmask.util.BluetoothUtils
+import com.intention.android.goodmask.viewmodel.BleViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 
 class BleService : Service() {
     private val mBinder: IBinder = LocalBinder()
+
     private lateinit var msg: String
     public var address : String = ""
     public var status : String = ""
@@ -45,12 +48,14 @@ class BleService : Service() {
             status = intent.getStringExtra("dustStatus")!!
         }
 
+
         when (intent?.action) {
             Actions.START_FOREGROUND -> {
                 startForegroundService()
             }
             Actions.STOP_FOREGROUND -> {
                 stopForegroundService()
+
             }
             Actions.DISCONNECT_DEVICE->{
                 disconnectGattServer("Disconnected")
@@ -166,7 +171,7 @@ class BleService : Service() {
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            //Log.d(TAG, "characteristic changed: " + characteristic.uuid.toString())
+            Log.d("change", "characteristic changed: " + characteristic.uuid.toString())
             readCharacteristic(characteristic)
         }
 
@@ -207,7 +212,7 @@ class BleService : Service() {
         private fun readCharacteristic(characteristic: BluetoothGattCharacteristic) {
             val msg = characteristic.value
             broadcastUpdate(Actions.READ_CHARACTERISTIC ,msg)
-            Log.d(TAG, "read: $msg")
+            Log.d("read/write", "read: ${String(msg)}")
         }
 
 
@@ -229,11 +234,10 @@ class BleService : Service() {
     fun disconnectGattServer(msg: String) {
         Log.d("hereigo", "Closing Gatt connection")
         // disconnect and close the gatt
-        if (bleGatt != null) {
-            Log.d("hereigo", "${bleGatt}")
-            bleGatt!!.disconnect()
-            bleGatt!!.close()
-        }
+
+        Log.d("hereigo", "${bleGatt}")
+        bleGatt!!.disconnect()
+        bleGatt!!.close()
         Log.d("hereigo", "${bleGatt}")
         stopForegroundService()
         broadcastUpdate(Actions.GATT_DISCONNECTED, msg)
@@ -255,26 +259,31 @@ class BleService : Service() {
         if (!success) {
             Log.e(TAG, "Failed to write command")
         }
-        else Log.d("write", "write : ${cmdCharacteristic.value}")
+        else Log.d("read/write", "write : ${String(cmdCharacteristic.value)}")
         bleRepository.cmdByteArray = null
 
     }
     private fun startNotification(){
         // find command characteristics from the GATT server
+        Log.d("readcmd", "Start Notification in bleservice")
         val respCharacteristic = bleGatt?.let { BluetoothUtils.findResponseCharacteristic(it) }
+        Log.d("readcmd", "repCharacteristic : ${respCharacteristic}")
+
         // disconnect if the characteristic is not found
         if (respCharacteristic == null) {
+            Log.d("readcmd", "disconnee")
             disconnectGattServer("Unable to find characteristic")
             return
         }
         // READ
         bleGatt?.setCharacteristicNotification(respCharacteristic, true)
         // UUID for notification
-        val descriptor: BluetoothGattDescriptor = respCharacteristic.getDescriptor(
+        val descriptor: BluetoothGattDescriptor? = respCharacteristic.getDescriptor(
             UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG)
         )
-        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        bleGatt?.writeDescriptor(descriptor)
+        descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        Log.d("readcmd", "${descriptor}")
+        if (descriptor != null)bleGatt?.writeDescriptor(descriptor)
     }
 
     private fun stopNotification(){

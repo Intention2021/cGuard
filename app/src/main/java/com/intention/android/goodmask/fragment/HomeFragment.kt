@@ -2,13 +2,13 @@ package com.intention.android.goodmask.fragment
 
 import android.Manifest
 import android.bluetooth.BluetoothDevice
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,6 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -29,11 +30,8 @@ import com.google.gson.GsonBuilder
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.activity.BleService
 import com.intention.android.goodmask.activity.DeviceActivity
-import com.intention.android.goodmask.activity.MainActivity
 import com.intention.android.goodmask.activity.SplashActivity
-import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.databinding.FragHomeBinding
-import com.intention.android.goodmask.databinding.FragMaskBinding
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.model.MaskData
@@ -70,6 +68,16 @@ class HomeFragment : Fragment() {
     var pastFanPower = 0
     private var db : MaskDB? = null
 
+    private fun registerChooser() {
+        if(registerState){
+            viewModel.unregisterReceiver()
+            registerState = false
+        }else{
+            viewModel.registBroadCastReceiver()
+            registerState = true
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,8 +88,8 @@ class HomeFragment : Fragment() {
         binding = DataBindingUtil.inflate(inflater, R.layout.frag_home, container,false)
         binding.viewModel = viewModel
         val view = binding.root
-        viewModel.registBroadCastReceiver()
-        registerState = true
+        registerState = false
+        registerChooser()
 
         db = MaskDB.getInstance(context?.applicationContext!!)
 
@@ -93,12 +101,10 @@ class HomeFragment : Fragment() {
         maskFanPowerText = binding.fanTitle
         disConBtn = binding.disconnectBtn
         disConBtn.setOnClickListener {
-            viewModel.onClickDisconnect()
-            viewModel.unregisterReceiver()
-            registerState = false
-            context?.stopService(Intent(context, BleService::class.java))
-            context?.startActivity(Intent(context, DeviceActivity::class.java))
-            activity?.finish()
+            activity?.finishAffinity()
+            val intent = Intent(context, DeviceActivity::class.java)
+            startActivity(intent)
+            System.exit(0)
         }
         val gson = GsonBuilder().setLenient().create()
 
@@ -117,9 +123,11 @@ class HomeFragment : Fragment() {
         timer.schedule(object : TimerTask(){
             override fun run() {
                 getNewLocation(retrofit)
+                viewModel.onClickWrite('P')
+                viewModel.onClickRead()
+                // Log.d("read", "readByteArray : ${a.toString()}")
             }
-
-        }, 3600000, 3600000)
+        }, 10000, 3600000)
 
         Log.d("homeFrag", address.toString())
         binding.locationText.text = address
@@ -138,8 +146,8 @@ class HomeFragment : Fragment() {
                 when(p1){
                     0 -> {
                         // fan stop
+                        viewModel.onClickWrite('N')
                         if(pastFanPower != 0){
-                            viewModel.onClickWrite()
                             // 팬 작동 종료
                             if (pastFanPower != 0){
                                 end = System.currentTimeMillis()
@@ -160,7 +168,7 @@ class HomeFragment : Fragment() {
                     }
                     1 -> {
                         // fan start
-                        viewModel.onClickWrite()
+                        viewModel.onClickWrite('A')
                         // 팬 작동 시작
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
@@ -169,7 +177,7 @@ class HomeFragment : Fragment() {
                     }
                     2 -> {
                         // fan start
-                        viewModel.onClickWrite()
+                        viewModel.onClickWrite('B')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
@@ -177,7 +185,7 @@ class HomeFragment : Fragment() {
                     }
                     3 -> {
                         // fan start
-                        viewModel.onClickWrite()
+                        viewModel.onClickWrite('C')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
@@ -185,12 +193,13 @@ class HomeFragment : Fragment() {
                     }
                     4 -> {
                         // fan start
-                        viewModel.onClickWrite()
+                        viewModel.onClickWrite('D')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
                     }
+
                 }
                 pastFanPower = p1
             }
@@ -203,6 +212,7 @@ class HomeFragment : Fragment() {
         })
 
         initObserver(binding)
+        registerChooser()
 
         return view
     }
@@ -210,22 +220,47 @@ class HomeFragment : Fragment() {
     private fun initObserver(binding: FragHomeBinding?) {
         viewModel.readTxt?.observe(this,{
             val now = System.currentTimeMillis()
+            var bstatus = ""
+            when(it){
+                "Z" -> bstatus = "0%"
+                "L" -> bstatus = "25%"
+                "M" -> bstatus = "50%"
+                "H" -> bstatus = "75%"
+                "F" -> bstatus = "100%"
+                else -> "?%"
+            }
+            binding?.txtBattery?.text = bstatus
             val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
             val timestamp = datef.format(Date(now))
         })
     }
 
+    fun checkIfFragmentAttached(operation: Context.() -> Unit) {
+        if (isAdded && context != null) {
+            operation(requireContext())
+        }
+    }
+
     // 새로고침 시 새 주소 출력
     private fun getNewLocation(retrofit: Retrofit) {
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    val geocoder = Geocoder(requireContext(), Locale.KOREA)
-                    addressInfo = getNewAddress(geocoder, location!!, retrofit)
-                    binding.locationText.text = addressInfo
-                    Log.d("Clicked refresh button ", addressInfo)
-                }
+        checkIfFragmentAttached {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        val geocoder = Geocoder(requireContext(), Locale.KOREA)
+                        addressInfo = getNewAddress(geocoder, location!!, retrofit)
+                        binding.locationText.text = addressInfo
+                        Log.d("Clicked refresh button ", addressInfo)
+                    }
+            }
         }
     }
 
@@ -247,9 +282,7 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        if(registerState){
-            viewModel.unregisterReceiver()
-        }
+        if(registerState) viewModel.unregisterReceiver()
     }
 
     // 위/경도 -> TM좌표로 변환
@@ -306,10 +339,10 @@ class HomeFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun dataToService(status: String){
         // 포그라운드 데이터 전달 위함
-        val intent = Intent(context, BleService::class.java)
-        intent.putExtra("address", address)
         Log.e("Give Address", "데이터 전달 $address")
         Log.e("Home to Service Status", status)
+        val intent = Intent(context, BleService::class.java)
+        intent.putExtra("address", address)
         intent.putExtra("dustStatus", status)
 
         if (arguments?.getParcelable<BluetoothDevice>("device") != null){

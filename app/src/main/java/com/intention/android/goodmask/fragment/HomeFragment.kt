@@ -93,6 +93,23 @@ class HomeFragment : Fragment() {
 
         db = MaskDB.getInstance(context?.applicationContext!!)
 
+        val r = Runnable {
+            val data = db?.MaskDao()?.getAll()
+            // 맨 처음으로 실행할 때 데이터가 없으므로 다 0으로 세팅
+            if (data!!.size == 0){
+                Log.e("First!!", "첫 실행입니다.")
+                for (i in 1..7){
+                    val firstDB = MaskData(i.toString(), 0.toLong(), 0.toLong(), 0.toLong());
+                    db?.MaskDao()?.insert(firstDB)
+                }
+                val data = db?.MaskDao()?.getAll()
+                Log.e("DBDBDB", "${data}")
+                Log.e("DBDBDB", "${data?.size}")
+            }
+        }
+        val thread = Thread(r)
+        thread.start()
+
         address = arguments?.getString("address").toString()
         val lat = arguments?.getDouble("latitude")
         val long = arguments?.getDouble("longitude")
@@ -159,7 +176,8 @@ class HomeFragment : Fragment() {
                                     val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
                                     db?.MaskDao()?.update(updateDB)
                                     val data = db?.MaskDao()?.getAll()
-                                    Log.e("DBDBDBDBDB", data.toString())
+                                    Log.e("DBDBDB", "${data}")
+                                    Log.e("DBDBDB", "${data?.size}")
                                 }
                                 val thread = Thread(r)
                                 thread.start()

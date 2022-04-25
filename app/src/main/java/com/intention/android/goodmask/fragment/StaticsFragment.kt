@@ -23,6 +23,7 @@ import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragStaticsBinding
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.util.CustomMarkerView
+import kotlinx.coroutines.flow.asFlow
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -129,19 +130,19 @@ class StaticsFragment : Fragment() {
         val currentDay = 3
         weekUseTime = 0
         val entries = ArrayList<BarEntry>()
-        entries.add(BarEntry(1.0f, 3.0f))
-        entries.add(BarEntry(2.0f, 5.0f))
-        entries.add(BarEntry(3.0f, 7.0f))
-        entries.add(BarEntry(4.0f, 6.0f))
-        entries.add(BarEntry(5.0f, 9.0f))
-        entries.add(BarEntry(6.0f, 1.0f))
-        entries.add(BarEntry(7.0f, 10.0f))
+        entries.add(BarEntry(1.0f, timeByDayMin[0]/60.0f))
+        entries.add(BarEntry(2.0f, timeByDayMin[1]/60.0f))
+        entries.add(BarEntry(3.0f, timeByDayMin[2]/60.0f))
+        entries.add(BarEntry(4.0f, timeByDayMin[3]/60.0f))
+        entries.add(BarEntry(5.0f, timeByDayMin[4]/60.0f))
+        entries.add(BarEntry(6.0f, timeByDayMin[5]/60.0f))
+        entries.add(BarEntry(7.0f, timeByDayMin[6]/60.0f))
 
         dayUseTime = entries[currentDay].y.toInt()
         entries.forEach {
             weekUseTime += it.y.toInt()
         }
-        monthUseTime = weekUseTime
+        weekUseTV.text = weekUseTime.toString()
 
         /*dayUseTV.text = dayUseTime.toString() + "시간"
         totalUseTV.text = monthUseTime.toString() + "시간"*/

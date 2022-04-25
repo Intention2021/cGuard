@@ -83,42 +83,7 @@ class HomeFragment : Fragment() {
         viewModel.registBroadCastReceiver()
         registerState = true
 
-        // 요일 1~7: 일~토
-        val day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-
-        // start는 필터 키고, end는 필터 끄는 시간으로 넘겨받으면 될듯
-        val start = System.currentTimeMillis()
-        val end = 0
-        // val newDB = MaskData("7", start, end.toLong(), 0)
         db = MaskDB.getInstance(context?.applicationContext!!)
-
-        // 월요일에 처음으로 가동하는 경우 주간 기록을 초기화
-        /*var cycle = 0
-        if (day == "2" && cycle % 8 == 0){
-            val r = Runnable {
-                db?.MaskDao()?.deleteAll()
-                for (i in 1..7){
-                    val newDB = MaskData(i.toString(), 0, 0.toLong(), 0)
-                    db?.MaskDao()?.insert(newDB)
-                }
-            }
-            cycle++
-            val thread = Thread(r)
-            thread.start()
-        }*/
-
-        val r = Runnable {
-            // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
-            val time = db?.MaskDao()?.getTime(day)
-            // 아래부분은 시간 추가할 때 사하면 될
-            // val updateDB = MaskData(day, start, end.toLong(), 100 + time!!);
-            // db?.MaskDao()?.update(updateDB)
-
-            val data = db?.MaskDao()?.getAll()
-            Log.e("DBDBDBDBDB", data.toString())
-        }
-        val thread = Thread(r)
-        thread.start()
 
         address = arguments?.getString("address").toString()
         val lat = arguments?.getDouble("latitude")
@@ -163,6 +128,10 @@ class HomeFragment : Fragment() {
             getNewLocation(retrofit)
         }
 
+        var start: Long = 0
+        var end: Long = 0
+        // 요일 1~7: 일~토
+        var day = ""
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 maskFanPowerText.text = "팬 세기\n${p1}"
@@ -171,23 +140,56 @@ class HomeFragment : Fragment() {
                         // fan stop
                         if(pastFanPower != 0){
                             viewModel.onClickWrite()
+                            // 팬 작동 종료
+                            if (pastFanPower != 0){
+                                end = System.currentTimeMillis()
+                                val r = Runnable {
+                                    // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
+                                    val time = db?.MaskDao()?.getTime(day)
+                                    // 아래부분은 시간 추가할 때 사하면 될
+                                    Log.e("Start and End", "$day / $start / $end")
+                                    val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
+                                    db?.MaskDao()?.update(updateDB)
+                                    val data = db?.MaskDao()?.getAll()
+                                    Log.e("DBDBDBDBDB", data.toString())
+                                }
+                                val thread = Thread(r)
+                                thread.start()
+                            }
                         }
                     }
                     1 -> {
                         // fan start
                         viewModel.onClickWrite()
+                        // 팬 작동 시작
+                        if (pastFanPower == 0){
+                            start = System.currentTimeMillis()
+                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
                     }
                     2 -> {
                         // fan start
                         viewModel.onClickWrite()
+                        if (pastFanPower == 0){
+                            start = System.currentTimeMillis()
+                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
                     }
                     3 -> {
                         // fan start
                         viewModel.onClickWrite()
+                        if (pastFanPower == 0){
+                            start = System.currentTimeMillis()
+                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
                     }
                     4 -> {
                         // fan start
                         viewModel.onClickWrite()
+                        if (pastFanPower == 0){
+                            start = System.currentTimeMillis()
+                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
                     }
                 }
                 pastFanPower = p1

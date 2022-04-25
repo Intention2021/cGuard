@@ -67,6 +67,7 @@ class BluetoothUtils {
                 for (characteristic in characteristicList!!) {
                     Log.d("character", "${characteristic}")
                     if (matchCharacteristic(characteristic, uuidString) && characteristic != null) {
+                        Log.d("readcmd", "hello ${characteristic}")
                         return characteristic
                     }
                 }

@@ -212,7 +212,7 @@ class BleService : Service() {
         private fun readCharacteristic(characteristic: BluetoothGattCharacteristic) {
             val msg = characteristic.value
             broadcastUpdate(Actions.READ_CHARACTERISTIC ,msg)
-            Log.d(TAG, "read: $msg")
+            Log.d("read/write", "read: ${String(msg)}")
         }
 
 
@@ -259,26 +259,31 @@ class BleService : Service() {
         if (!success) {
             Log.e(TAG, "Failed to write command")
         }
-        else Log.d("write", "write : ${cmdCharacteristic.value.toString()}")
+        else Log.d("read/write", "write : ${String(cmdCharacteristic.value)}")
         bleRepository.cmdByteArray = null
 
     }
     private fun startNotification(){
         // find command characteristics from the GATT server
+        Log.d("readcmd", "Start Notification in bleservice")
         val respCharacteristic = bleGatt?.let { BluetoothUtils.findResponseCharacteristic(it) }
+        Log.d("readcmd", "repCharacteristic : ${respCharacteristic}")
+
         // disconnect if the characteristic is not found
         if (respCharacteristic == null) {
+            Log.d("readcmd", "disconnee")
             disconnectGattServer("Unable to find characteristic")
             return
         }
         // READ
         bleGatt?.setCharacteristicNotification(respCharacteristic, true)
         // UUID for notification
-        val descriptor: BluetoothGattDescriptor = respCharacteristic.getDescriptor(
+        val descriptor: BluetoothGattDescriptor? = respCharacteristic.getDescriptor(
             UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG)
         )
-        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        bleGatt?.writeDescriptor(descriptor)
+        descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        Log.d("readcmd", "${descriptor}")
+        if (descriptor != null)bleGatt?.writeDescriptor(descriptor)
     }
 
     private fun stopNotification(){

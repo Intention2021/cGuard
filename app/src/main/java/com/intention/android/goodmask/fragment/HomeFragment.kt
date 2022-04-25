@@ -159,6 +159,7 @@ class HomeFragment : Fragment() {
             override fun run() {
                 getNewLocation(retrofit)
                 viewModel.onClickWrite('P')
+                viewModel.onClickRead()
                 // Log.d("read", "readByteArray : ${a.toString()}")
             }
         }, 10000, 3600000)
@@ -173,7 +174,6 @@ class HomeFragment : Fragment() {
         maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 maskFanPowerText.text = "팬 세기\n${p1}"
-                registerChooser()
                 when(p1){
                     0 -> {
                         // fan stop
@@ -210,6 +210,7 @@ class HomeFragment : Fragment() {
         })
 
         initObserver(binding)
+        registerChooser()
 
         return view
     }

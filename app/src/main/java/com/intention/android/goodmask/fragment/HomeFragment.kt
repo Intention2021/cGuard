@@ -32,6 +32,7 @@ import com.intention.android.goodmask.activity.BleService
 import com.intention.android.goodmask.activity.DeviceActivity
 import com.intention.android.goodmask.activity.SplashActivity
 import com.intention.android.goodmask.databinding.FragHomeBinding
+import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.model.MaskData
 import com.intention.android.goodmask.stationData.StationInfo
@@ -216,6 +217,16 @@ class HomeFragment : Fragment() {
     private fun initObserver(binding: FragHomeBinding?) {
         viewModel.readTxt?.observe(this,{
             val now = System.currentTimeMillis()
+            var bstatus = ""
+            when(it){
+                "Z" -> bstatus = "0%"
+                "L" -> bstatus = "25%"
+                "M" -> bstatus = "50%"
+                "H" -> bstatus = "75%"
+                "F" -> bstatus = "100%"
+                else -> "?%"
+            }
+            binding?.txtBattery?.text = bstatus
             val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
             val timestamp = datef.format(Date(now))
         })

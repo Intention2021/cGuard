@@ -63,44 +63,10 @@
                 android:textColor="#000"
                 android:textSize="24dp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toTopOf="@+id/day_usage_time"
+                app:layout_constraintBottom_toTopOf="@+id/week_usage_time"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/month_usage_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="3시간"
-                android:textColor="#000"
-                android:textSize="18dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/day_usage_time"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <View
-                android:id="@+id/view2"
-                android:layout_width="36dp"
-                android:layout_height="2dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/gmcolor"
-                app:layout_constraintEnd_toStartOf="@+id/day_usage_time"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/month_usage_time" />
-
-            <TextView
-                android:id="@+id/textView3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="일간"
-                android:textColor="#000"
-                android:textSize="18dp"
-                app:layout_constraintEnd_toStartOf="@+id/day_usage_time"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/view2" />
 
             <TextView
                 android:id="@+id/day_usage_time"
@@ -110,6 +76,40 @@
                 android:textColor="#000"
                 android:textSize="18dp"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/week_usage_time"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <View
+                android:id="@+id/view2"
+                android:layout_width="36dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="12dp"
+                android:background="@color/gmcolor"
+                app:layout_constraintEnd_toStartOf="@+id/week_usage_time"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/day_usage_time" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="일간"
+                android:textColor="#000"
+                android:textSize="18dp"
+                app:layout_constraintEnd_toStartOf="@+id/week_usage_time"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/view2" />
+
+            <TextView
+                android:id="@+id/week_usage_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3시간"
+                android:textColor="#000"
+                android:textSize="18dp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -121,7 +121,7 @@
                 android:background="@color/gmcolor"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/month_usage_time" />
+                app:layout_constraintTop_toBottomOf="@+id/day_usage_time" />
 
             <TextView
                 android:id="@+id/textView4"
@@ -136,7 +136,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/view2" />
 
             <TextView
-                android:id="@+id/month_usage_time2"
+                android:id="@+id/total_usage_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="3시간"
@@ -144,7 +144,7 @@
                 android:textSize="18dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/day_usage_time"
+                app:layout_constraintStart_toEndOf="@+id/week_usage_time"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <View
@@ -153,18 +153,18 @@
                 android:layout_marginTop="12dp"
                 android:background="@color/gmcolor"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/day_usage_time"
-                app:layout_constraintTop_toBottomOf="@+id/month_usage_time" />
+                app:layout_constraintStart_toEndOf="@+id/week_usage_time"
+                app:layout_constraintTop_toBottomOf="@+id/day_usage_time" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="월간"
+                android:text="총 사용량"
                 android:textColor="#000"
                 android:textSize="18dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/day_usage_time"
+                app:layout_constraintStart_toEndOf="@+id/week_usage_time"
                 app:layout_constraintTop_toBottomOf="@+id/view2" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

@@ -299,7 +299,7 @@ class BleService : Service() {
 
     private fun startForeground(){
         channelRegister()
-        val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), 0)
+        val contentIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
 
         msg = "미세먼지 $status"
         if(status == "나쁨" || status == "매우 나쁨") {

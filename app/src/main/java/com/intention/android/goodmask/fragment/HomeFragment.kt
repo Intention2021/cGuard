@@ -2,8 +2,10 @@ package com.intention.android.goodmask.fragment
 
 import android.Manifest
 import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
@@ -23,6 +25,7 @@ import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.room.Room
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -67,6 +70,7 @@ class HomeFragment : Fragment() {
     var registerState : Boolean = false
     var pastFanPower = 0
     private var db : MaskDB? = null
+    var readMSG = ""
 
     private fun registerChooser() {
         if(registerState){
@@ -90,7 +94,8 @@ class HomeFragment : Fragment() {
         val view = binding.root
         registerState = false
         registerChooser()
-
+        activity?.let { register(
+            it) }
         db = MaskDB.getInstance(context?.applicationContext!!)
 
         val r = Runnable {
@@ -239,14 +244,6 @@ class HomeFragment : Fragment() {
         viewModel.readTxt?.observe(this,{
             val now = System.currentTimeMillis()
             var bstatus = ""
-            when(it){
-                "Z" -> bstatus = "0%"
-                "L" -> bstatus = "25%"
-                "M" -> bstatus = "50%"
-                "H" -> bstatus = "75%"
-                "F" -> bstatus = "100%"
-                else -> "?%"
-            }
             binding?.txtBattery?.text = bstatus
             val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
             val timestamp = datef.format(Date(now))
@@ -352,6 +349,31 @@ class HomeFragment : Fragment() {
                     Toast.makeText(context, "측정소 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
                 }
             })
+    }
+
+    private fun register(ctx: Context) {
+        LocalBroadcastManager.getInstance(ctx).registerReceiver(
+            sendReceiver, IntentFilter("sendMSG")
+        )
+    }
+
+    fun unRegister(ctx: Context) {
+        LocalBroadcastManager.getInstance(ctx).registerReceiver(
+            sendReceiver, IntentFilter("sendMSG")
+        )
+    }
+
+    private val sendReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            readMSG = intent.getStringExtra("msg")!!
+            when(readMSG){
+                "Z" -> binding.txtBattery.text = "0%"
+                "L" -> binding.txtBattery.text = "25%"
+                "M" -> binding.txtBattery.text = "50%"
+                "H" -> binding.txtBattery.text = "75%"
+                "F" -> binding.txtBattery.text = "100%"
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

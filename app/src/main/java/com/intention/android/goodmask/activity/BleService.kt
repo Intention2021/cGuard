@@ -4,13 +4,16 @@ import android.bluetooth.*
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.graphics.Color
 import android.os.*
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MIN
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.intention.android.goodmask.*
 import com.intention.android.goodmask.util.BluetoothUtils
 import com.intention.android.goodmask.viewmodel.BleViewModel
@@ -146,7 +149,18 @@ class BleService : Service() {
                 }, 0)
                 gatt.discoverServices()
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.d("disconnect", "Disconnect to the device")
                 broadcastUpdate(Actions.GATT_DISCONNECTED, "Disconnected")
+            }
+            else {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed(Runnable {
+                    Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                }, 0)
+                ActivityCompat.finishAffinity(Activity())
+                val intent = Intent(baseContext, DeviceActivity::class.java)
+                startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK))
+                System.exit(0)
             }
         }
 
@@ -213,9 +227,16 @@ class BleService : Service() {
             val msg = characteristic.value
             broadcastUpdate(Actions.READ_CHARACTERISTIC ,msg)
             Log.d("read/write", "read: ${String(msg)}")
+            sendMSG(String(msg))
         }
 
 
+    }
+
+    private fun sendMSG(readMSG: String) {
+        val intent = Intent("sendMSG")
+        intent.putExtra("msg", readMSG)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     /**
@@ -225,6 +246,7 @@ class BleService : Service() {
         // update the status
         broadcastUpdate(Actions.STATUS_MSG, "Connecting to ${device?.address}")
         bleGatt = device?.connectGatt(BleApplication.applicationContext(), false, gattClientCallback)
+        Log.d("blegatt", "${bleGatt}")
     }
 
 
@@ -236,16 +258,36 @@ class BleService : Service() {
         // disconnect and close the gatt
 
         Log.d("hereigo", "${bleGatt}")
-        bleGatt!!.disconnect()
-        bleGatt!!.close()
+        if(bleGatt != null){
+            bleGatt!!.disconnect()
+            bleGatt!!.close()
+        }else {
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed(Runnable {
+                Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }, 0)
+            ActivityCompat.finishAffinity(Activity())
+            val intent = Intent(baseContext, DeviceActivity::class.java)
+            startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK))
+            System.exit(0)
+        }
         Log.d("hereigo", "${bleGatt}")
         stopForegroundService()
         broadcastUpdate(Actions.GATT_DISCONNECTED, msg)
     }
 
     private fun writeData(cmdByteArray: ByteArray) {
-        var cmdCharacteristic = BluetoothUtils.findCommandCharacteristic(bleGatt!!)
-        Log.d("bleservice", "blegatt : ${bleGatt}, cmdCharacteristic : ${cmdCharacteristic}, cmdByteArray : ${cmdByteArray.toString()}")
+        var cmdCharacteristic : BluetoothGattCharacteristic?
+        if(bleGatt == null) {
+            cmdCharacteristic = null
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed(Runnable {
+                Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }, 0)
+            return
+        }
+        else cmdCharacteristic  = BluetoothUtils.findCommandCharacteristic(bleGatt!!)
+        Log.d("bleservice", "blegatt : ${bleGatt}, cmdCharacteristic : ${cmdCharacteristic}, cmdByteArray : ${String(cmdByteArray)}")
         // disconnect if the characteristic is not found
         if (cmdCharacteristic == null) {
             bleRepository.cmdByteArray = null

@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothGattService
 import android.util.Log
 import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_COMMAND_STRING
 import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_RESPONSE_STRING
-import com.intention.android.goodmask.model.Constant.Companion.SERVICE_STRING
 import com.intention.android.goodmask.model.Constant.Companion.SERVICE_UUID
 import java.util.*
 import kotlin.collections.ArrayList

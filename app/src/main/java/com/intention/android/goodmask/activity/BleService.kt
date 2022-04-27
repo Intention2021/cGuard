@@ -167,6 +167,7 @@ class BleService : Service() {
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
 
+            Log.d("blegatt", "${bleGatt}")
             // check if the discovery failed
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnectGattServer("Device service discovery failed, status: $status")
@@ -278,6 +279,7 @@ class BleService : Service() {
 
     private fun writeData(cmdByteArray: ByteArray) {
         var cmdCharacteristic : BluetoothGattCharacteristic?
+        Log.d("bleservice", "blegatt : ${bleGatt.toString()}")
         if(bleGatt == null) {
             cmdCharacteristic = null
             val handler = Handler(Looper.getMainLooper())
@@ -319,13 +321,6 @@ class BleService : Service() {
         }
         // READ
         bleGatt?.setCharacteristicNotification(respCharacteristic, true)
-        // UUID for notification
-        val descriptor: BluetoothGattDescriptor? = respCharacteristic.getDescriptor(
-            UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG)
-        )
-        descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        Log.d("readcmd", "${descriptor}")
-        if (descriptor != null)bleGatt?.writeDescriptor(descriptor)
     }
 
     private fun stopNotification(){

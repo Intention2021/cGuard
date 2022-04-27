@@ -135,18 +135,23 @@ class HomeFragment : Fragment() {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
-
-        val (tmX, tmY) = setWGS84TM(lat!!, long!!)
-        Log.d("TM_XY", "$tmX / $tmY")
-        getDustInfo(retrofit, tmX, tmY)
+        Log.d("lat/long", "${lat}, ${long}")
+        if(!checkLongLatNull(long, lat)){
+            val (tmX, tmY) = setWGS84TM(lat!!, long!!)
+            Log.d("TM_XY", "$tmX / $tmY")
+            getDustInfo(retrofit, tmX, tmY)
+        }
 
         // 정해진 시간마다 업데이트
         val timer = Timer()
         timer.schedule(object : TimerTask(){
             override fun run() {
                 getNewLocation(retrofit)
-                viewModel.onClickWrite('P')
-                viewModel.onClickRead()
+                for (i in 1..3){
+                    viewModel.onClickWrite('P')
+                    viewModel.onClickRead()
+                    Thread.sleep(200)
+                }
                 // Log.d("read", "readByteArray : ${a.toString()}")
             }
         }, 10000, 3600000)
@@ -168,7 +173,6 @@ class HomeFragment : Fragment() {
                 when(p1){
                     0 -> {
                         // fan stop
-                        viewModel.onClickWrite('N')
                         if(pastFanPower != 0){
                             // 팬 작동 종료
                             if (pastFanPower != 0){
@@ -188,38 +192,54 @@ class HomeFragment : Fragment() {
                                 thread.start()
                             }
                         }
+                        for (i in 1..3){
+                            viewModel.onClickWrite('N')
+                            Thread.sleep(100)
+                        }
                     }
                     1 -> {
                         // fan start
-                        viewModel.onClickWrite('A')
                         // 팬 작동 시작
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
+                        for (i in 1..3){
+                            viewModel.onClickWrite('A')
+                            Thread.sleep(100)
+                        }
                     }
                     2 -> {
                         // fan start
-                        viewModel.onClickWrite('B')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
+                        for (i in 1..3){
+                            viewModel.onClickWrite('B')
+                            Thread.sleep(100)
                         }
                     }
                     3 -> {
                         // fan start
-                        viewModel.onClickWrite('C')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
+                        for (i in 1..3){
+                            viewModel.onClickWrite('C')
+                            Thread.sleep(100)
+                        }
                     }
                     4 -> {
                         // fan start
-                        viewModel.onClickWrite('D')
                         if (pastFanPower == 0){
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+                        }
+                        for (i in 1..3){
+                            viewModel.onClickWrite('D')
+                            Thread.sleep(100)
                         }
                     }
 
@@ -286,7 +306,7 @@ class HomeFragment : Fragment() {
             val splitedAddr = addr.getAddressLine(0).split(" ")
             addressList = splitedAddr
         }
-        addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
+        addressInfo = "${addressList[addressList.size-3]} ${addressList[addressList.size-2]} ${addressList[addressList.size-1]}"
         // 새 좌표를 다시 TM좌표로 변환 후 미세먼지 치수 다시 가져오기
         val (newTMX, newTMY) = setWGS84TM(location.latitude, location.longitude)
         getDustInfo(retrofit, newTMX, newTMY)
@@ -323,16 +343,24 @@ class HomeFragment : Fragment() {
         return TMInfo
     }
 
+    public fun checkLongLatNull(long: Double?, lat:Double?) : Boolean{
+        if (long == null || lat == null) return true
+        else return false
+    }
+
     override fun onDestroy() {
         super.onDestroy()
     }
 
     // 가장 가까운 측정소를 구하고 미세먼지 농도 데이터 가져오기
-    private fun getDustInfo(retrofit: Retrofit, tmX: Double, tmY: Double) {
+    private fun getDustInfo(retrofit: Retrofit, tmX: Double?, tmY: Double?) {
         val stationService: StationService? = retrofit.create(StationService::class.java)
 
         val key = "reoV++nM+7IsY4GLfsMfFBjKc/0t6gmgytKyqzrR7DbEaCNasNyCT131Qk2yPuPeC5uQqcHFlt4nWQLhDsnWDw=="
-        stationService?.getInfo(key, "json", tmX, tmY)
+        if (tmX == null || tmY == null){
+
+        }
+        stationService?.getInfo(key, "json", tmX!!, tmY!!)
             ?.enqueue(object : Callback<StationInfo> {
                 override fun onResponse(call: Call<StationInfo>, response: Response<StationInfo>) {
                     val stationList = response.body()?.response?.body?.items
@@ -346,7 +374,7 @@ class HomeFragment : Fragment() {
 
                 override fun onFailure(call: Call<StationInfo>, t: Throwable) {
                     Log.d("onFailure in Station", t.message!!)
-                    Toast.makeText(context, "측정소 정보를 가져오는 중 에러가 발생했습니다. 다시 실행해주세요.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "측정소 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
                 }
             })
     }
@@ -381,7 +409,7 @@ class HomeFragment : Fragment() {
         // 포그라운드 데이터 전달 위함
         Log.e("Give Address", "데이터 전달 $address")
         Log.e("Home to Service Status", status)
-        val intent = Intent(context, BleService::class.java)
+        val intent = Intent(context, BleService::class.java)!!
         intent.putExtra("address", address)
         intent.putExtra("dustStatus", status)
 

@@ -4,31 +4,11 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.util.Log
-import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_COMMAND_STRING
-import com.intention.android.goodmask.model.Constant.Companion.CHARACTERISTIC_RESPONSE_STRING
-import com.intention.android.goodmask.model.Constant.Companion.SERVICE_UUID
+import com.intention.android.goodmask.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 class BluetoothUtils {
     companion object {
-        /**
-         * Find characteristics of BLE
-         * @param gatt gatt instance
-         * @return list of found gatt characteristics
-         */
-        fun findBLECharacteristics(gatt: BluetoothGatt): List<BluetoothGattCharacteristic> {
-            val matchingCharacteristics: MutableList<BluetoothGattCharacteristic> = ArrayList()
-            val serviceList = gatt.services
-            val service = findGattService(serviceList) ?: return matchingCharacteristics
-            val characteristicList = service.characteristics
-            for (characteristic in characteristicList) {
-                if (isMatchingCharacteristic(characteristic)) {
-                    matchingCharacteristics.add(characteristic)
-                }
-            }
-            return matchingCharacteristics
-        }
 
         /**
          * Find command characteristic of the peripheral device
@@ -37,7 +17,14 @@ class BluetoothUtils {
          */
         fun findCommandCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
             Log.d("helloe", "gatt : ${gatt}, ")
-            return findCharacteristic(gatt, CHARACTERISTIC_COMMAND_STRING)
+            return findCharacteristic(gatt,
+                CHARACTERISTIC_COMMAND_STRING,
+                CHARACTERISTIC_RESPONSE_STRING,
+                SERVICE_UUID,
+                SERVICE_STRING,
+                GENERIC_ACCESS,
+                GENERIC_ATTRIBUTE,
+                SERVICE_CHANGED)
         }
 
         /**
@@ -46,7 +33,14 @@ class BluetoothUtils {
          * @return found characteristic
          */
         fun findResponseCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-            return findCharacteristic(gatt, CHARACTERISTIC_RESPONSE_STRING)
+            return findCharacteristic(gatt,
+                CHARACTERISTIC_COMMAND_STRING,
+                CHARACTERISTIC_RESPONSE_STRING,
+                SERVICE_UUID,
+                SERVICE_STRING,
+                GENERIC_ACCESS,
+                GENERIC_ATTRIBUTE,
+                SERVICE_CHANGED)
         }
 
         /**
@@ -56,7 +50,7 @@ class BluetoothUtils {
          */
         private fun findCharacteristic(
             gatt: BluetoothGatt,
-            uuidString: String
+            vararg uuidsString: String
         ): BluetoothGattCharacteristic? {
             val serviceList = gatt.services
             val service = findGattService(serviceList)
@@ -65,13 +59,14 @@ class BluetoothUtils {
             if(characteristicList !=null){
                 for (characteristic in characteristicList!!) {
                     Log.d("character", "${characteristic}")
-                    if (matchCharacteristic(characteristic, uuidString) && characteristic != null) {
-                        Log.d("readcmd", "hello ${characteristic}")
-                        return characteristic
+                    for (uuidString in uuidsString){
+                        if (matchCharacteristic(characteristic, uuidString) && characteristic != null) {
+                            Log.d("readcmd", "hello ${characteristic}")
+                            return characteristic
+                        }
                     }
                 }
             }
-
             return null
         }
 
@@ -90,7 +85,14 @@ class BluetoothUtils {
             }
             val uuid: UUID = characteristic.uuid
             Log.d("UUID", "UUID : ${uuid}, uuidString : ${uuidString}")
-            return matchUUIDs(uuid.toString(), uuidString)
+            return matchUUIDs(uuid.toString(),
+                CHARACTERISTIC_COMMAND_STRING,
+                CHARACTERISTIC_RESPONSE_STRING,
+                SERVICE_UUID,
+                SERVICE_STRING,
+                GENERIC_ACCESS,
+                GENERIC_ATTRIBUTE,
+                SERVICE_CHANGED)
         }
 
         /**
@@ -116,7 +118,14 @@ class BluetoothUtils {
          * @return true if service uuid is matched
          */
         private fun matchServiceUUIDString(serviceUuidString: String): Boolean {
-            return matchUUIDs(serviceUuidString, SERVICE_UUID)
+            return matchUUIDs(serviceUuidString,
+                CHARACTERISTIC_COMMAND_STRING,
+                CHARACTERISTIC_RESPONSE_STRING,
+                SERVICE_UUID,
+                SERVICE_STRING,
+                GENERIC_ACCESS,
+                GENERIC_ATTRIBUTE,
+                SERVICE_CHANGED)
         }
 
         /**
@@ -140,8 +149,12 @@ class BluetoothUtils {
             return matchUUIDs(
                 characteristicUuidString,
                 CHARACTERISTIC_COMMAND_STRING,
-                CHARACTERISTIC_RESPONSE_STRING
-            )
+                CHARACTERISTIC_RESPONSE_STRING,
+                SERVICE_UUID,
+                SERVICE_STRING,
+                GENERIC_ACCESS,
+                GENERIC_ATTRIBUTE,
+                SERVICE_CHANGED)
         }
 
         /**

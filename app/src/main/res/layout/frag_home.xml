@@ -87,6 +87,7 @@
                     app:layout_constraintTop_toBottomOf="@+id/location" />
 
                 <TextView
+                    android:textSize="24dp"
                     android:id="@+id/locationText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -147,7 +148,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:layout_weight="1.7"
+                android:layout_weight="0.5"
                 android:baselineAligned="false"
                 android:layout_marginBottom="12dp"
                 android:orientation="horizontal">
@@ -173,7 +174,7 @@
                         android:layout_marginTop="16dp"
                         android:gravity="center_horizontal"
                         android:textStyle="bold"
-                        android:text="베터리 잔량"
+                        android:text="배터리 잔량"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -195,6 +196,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="24dp"
+                        android:textSize="24dp"
                         android:layout_marginBottom="24dp"
                         android:gravity="center_horizontal"
                         android:text="50%"
@@ -253,6 +255,7 @@
                         android:layout_marginBottom="24dp"
                         android:gravity="center_horizontal"
                         android:text="D-4"
+                        android:textSize="24dp"
                         android:textAppearance="@style/TextAppearance.AppCompat.Large"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -321,8 +324,8 @@
                 android:layout_marginEnd="18dp"
                 android:background="@drawable/rounded_orange_btn"
                 android:text="다른 기기 연결하기"
-                android:layout_weight="1.5"
-                android:textSize="18dp"
+                android:layout_weight="2"
+                android:textSize="14dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"

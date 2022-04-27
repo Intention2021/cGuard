@@ -29,7 +29,6 @@ import com.intention.android.goodmask.adapter.BleListAdapter
 import com.intention.android.goodmask.databinding.ActivityDeviceBinding
 import com.intention.android.goodmask.databinding.ActivityMainBinding
 import com.intention.android.goodmask.db.MaskDB
-import com.intention.android.goodmask.model.Constant.Companion.REQUEST_ENABLE_BT
 import com.intention.android.goodmask.model.MaskData
 import retrofit2.Retrofit
 import java.sql.Timestamp
@@ -120,7 +119,7 @@ class DeviceActivity : AppCompatActivity() {
         // displays a dialog requesting user permission to enable Bluetooth.
         bluetoothAdapter?.takeIf { it.isDisabled }?.apply {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
+            startActivityForResult(enableBtIntent, 1)
         }
     }
 

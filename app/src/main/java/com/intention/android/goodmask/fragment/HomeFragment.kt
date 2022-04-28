@@ -71,6 +71,7 @@ class HomeFragment : Fragment() {
     var pastFanPower = 0
     private var db : MaskDB? = null
     var readMSG = ""
+    private var fanPowerResponse = ""
 
     private fun registerChooser() {
         if(registerState){
@@ -96,6 +97,12 @@ class HomeFragment : Fragment() {
         registerChooser()
         activity?.let { register(
             it) }
+        Log.d("data device", "device")
+        if (arguments?.getParcelable<BluetoothDevice>("device") != null){
+            device = arguments?.getParcelable("device")
+            Log.d("data device", "${device}")
+            viewModel.connectDevice(device!!)
+        }
         db = MaskDB.getInstance(context?.applicationContext!!)
 
         val r = Runnable {
@@ -136,22 +143,23 @@ class HomeFragment : Fragment() {
             .build()
 
         Log.d("lat/long", "${lat}, ${long}")
-        if(!checkLongLatNull(long, lat)){
-            val (tmX, tmY) = setWGS84TM(lat!!, long!!)
-            Log.d("TM_XY", "$tmX / $tmY")
-            getDustInfo(retrofit, tmX, tmY)
-        }
+        val (tmX, tmY) = setWGS84TM(lat!!, long!!)
+        Log.d("TM_XY", "$tmX / $tmY")
+        getDustInfo(retrofit, tmX, tmY)
+
 
         // 정해진 시간마다 업데이트
         val timer = Timer()
         timer.schedule(object : TimerTask(){
             override fun run() {
+                Log.d("getnewloc", "newloc")
                 getNewLocation(retrofit)
-                for (i in 1..3){
-                    viewModel.onClickWrite('P')
-                    viewModel.onClickRead()
-                    Thread.sleep(200)
-                }
+//                for (i in 1..3){
+//                    viewModel.onClickWrite('P')
+//                    Log.d("read/", "Read Start")
+//                    viewModel.onClickRead()
+//                    Log.d("read/", "Read End")
+//                }
                 // Log.d("read", "readByteArray : ${a.toString()}")
             }
         }, 10000, 3600000)
@@ -192,10 +200,7 @@ class HomeFragment : Fragment() {
                                 thread.start()
                             }
                         }
-                        for (i in 1..3){
-                            viewModel.onClickWrite('N')
-                            Thread.sleep(100)
-                        }
+                        fanPowerIO('N')
                     }
                     1 -> {
                         // fan start
@@ -204,10 +209,7 @@ class HomeFragment : Fragment() {
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
-                        for (i in 1..3){
-                            viewModel.onClickWrite('A')
-                            Thread.sleep(100)
-                        }
+                        fanPowerIO('A')
                     }
                     2 -> {
                         // fan start
@@ -215,10 +217,7 @@ class HomeFragment : Fragment() {
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
-                        for (i in 1..3){
-                            viewModel.onClickWrite('B')
-                            Thread.sleep(100)
-                        }
+                        fanPowerIO('B')
                     }
                     3 -> {
                         // fan start
@@ -226,10 +225,7 @@ class HomeFragment : Fragment() {
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
-                        for (i in 1..3){
-                            viewModel.onClickWrite('C')
-                            Thread.sleep(100)
-                        }
+                        fanPowerIO('C')
                     }
                     4 -> {
                         // fan start
@@ -237,10 +233,7 @@ class HomeFragment : Fragment() {
                             start = System.currentTimeMillis()
                             day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
                         }
-                        for (i in 1..3){
-                            viewModel.onClickWrite('D')
-                            Thread.sleep(100)
-                        }
+                        fanPowerIO('D')
                     }
 
                 }
@@ -302,6 +295,7 @@ class HomeFragment : Fragment() {
     // 새 좌표를 이용해 주소 반환
     private fun getNewAddress(geocoder: Geocoder, location: Location, retrofit: Retrofit): String {
         val addrList = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+        Log.d("address", "${addrList}")
         for (addr in addrList) {
             val splitedAddr = addr.getAddressLine(0).split(" ")
             addressList = splitedAddr
@@ -394,14 +388,36 @@ class HomeFragment : Fragment() {
     private val sendReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             readMSG = intent.getStringExtra("msg")!!
+            Log.d("read/write/log", "fanPowerResponse : ${readMSG}")
             when(readMSG){
-                "Z" -> binding.txtBattery.text = "0%"
-                "L" -> binding.txtBattery.text = "25%"
-                "M" -> binding.txtBattery.text = "50%"
-                "H" -> binding.txtBattery.text = "75%"
-                "F" -> binding.txtBattery.text = "100%"
+//                "Z" -> binding.txtBattery.text = "0%"
+//                "L" -> binding.txtBattery.text = "25%"
+//                "M" -> binding.txtBattery.text = "50%"
+//                "H" -> binding.txtBattery.text = "75%"
+//                "F" -> binding.txtBattery.text = "100%"
+                "Y" -> fanPowerResponse = "Y"
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun fanPowerIO(inputData : Char){
+        Toast.makeText(context, "데이터 전송중..", Toast.LENGTH_SHORT).show()
+        for (i in 1..5){
+            viewModel.onClickWrite(inputData)
+            Log.d("read/write/log", "Read Start")
+
+            viewModel.onClickRead()
+
+        }
+        Log.d("read/write/log", "Read End fanpowerresponse : ${fanPowerResponse}")
+        Thread.sleep(3000)
+        if(fanPowerResponse == "Y"){
+            Toast.makeText(context, "팬세기 데이터 송/수신 : OK", Toast.LENGTH_SHORT).show()
+            fanPowerResponse = ""
+            return
+        }
+        Toast.makeText(context, "데이터가 수신되지 않습니다.", Toast.LENGTH_SHORT).show()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -441,6 +457,9 @@ class HomeFragment : Fragment() {
 
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
+                        if (addressInfo == "서울시 중구 명동"){
+                            binding.locationText.text = subStation
+                        }
                         binding.dust.text = "미세먼지 치수: $dustNum"
                         val status: String = setDustUI(dustNum!!.toInt())
                         // 서비스 클래스로 데이터 전송
@@ -455,6 +474,9 @@ class HomeFragment : Fragment() {
                                     val subDustList = response.body()?.response?.body?.items
                                     val subDustNum = subDustList?.get(0)?.pm10Value
                                     Log.d("Sub Dust Num", "미세먼지 농도: $subDustNum, 측정소는 $subStation")
+                                    if (addressInfo == "서울시 중구 명동"){
+                                        binding.locationText.text = subStation
+                                    }
                                     binding.dust.text = "미세먼지 치수: $subDustNum"
                                     val subStatus = setDustUI(subDustNum!!.toInt())
                                     // 서비스 클래스로 데이텉 전송

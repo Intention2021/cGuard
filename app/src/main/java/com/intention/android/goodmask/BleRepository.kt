@@ -158,11 +158,11 @@ class BleRepository {
     @RequiresApi(Build.VERSION_CODES.O)
     fun readToggle(){
         if(isRead){
-            Log.d("readcmd", "Stop Notification")
+            Log.d("read/", "Stop Notification")
             isRead = false
             stopNotification()
         }else{
-            Log.d("readcmd", "Start Notification")
+            Log.d("read/", "Start Notification")
             isRead = true
             startNotification()
         }

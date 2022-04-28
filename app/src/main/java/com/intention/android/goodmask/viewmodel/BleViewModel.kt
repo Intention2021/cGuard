@@ -164,6 +164,7 @@ class BleViewModel(private val bleRepository: BleRepository) : ViewModel() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun onClickRead(){
+        Log.d("read/", "onClickRead start")
         bleRepository.readToggle()
     }
 

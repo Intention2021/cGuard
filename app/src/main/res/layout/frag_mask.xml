@@ -12,61 +12,10 @@
         android:orientation="vertical">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layoutInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:elevation="3dp"
-            android:layout_marginBottom="16dp"
-            android:layout_weight="1"
-            android:background="@drawable/rounded_white_btn"
-            app:layout_constraintBottom_toTopOf="@+id/layoutBattery">
-
-            <TextView
-                android:textColor="@color/black"
-                android:id="@+id/maskInfoTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textStyle="bold"
-                android:textSize="18dp"
-                android:gravity="center_horizontal"
-                android:text="마스크 정보"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <View
-                android:id="@+id/infoView"
-                android:layout_marginTop="12dp"
-                android:layout_width="60dp"
-                android:layout_height="2dp"
-                android:background="#FFC063"
-                android:foregroundGravity="center_horizontal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/maskInfoTitle" />
-
-            <TextView
-                android:id="@+id/maskInfoText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:text="마스크 일련번호 같은거 들어갈 곳"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/infoView" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutBattery"
             android:layout_marginLeft="18dp"
             android:layout_marginRight="18dp"
+            android:layout_marginTop="18dp"
             android:elevation="3dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,6 +50,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/batteryText" />
 
             <TextView
+                android:textColor="#000"
                 android:id="@+id/batteryPercent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -154,6 +104,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/filterText" />
 
             <TextView
+                android:textColor="#000"
                 android:id="@+id/filterDay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -194,6 +145,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <SeekBar
+                android:elevation="3dp"
                 android:id="@+id/seekBar"
                 style="@style/Widget.AppCompat.SeekBar.Discrete"
                 android:layout_width="match_parent"
@@ -203,7 +155,7 @@
                 android:layout_marginEnd="12dp"
                 android:layout_marginBottom="16dp"
                 android:foregroundGravity="center_horizontal"
-                android:max="10"
+                android:max="5"
                 android:progress="0"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -225,7 +177,7 @@
                 android:layout_marginStart="18dp"
                 android:layout_marginEnd="18dp"
                 android:background="@drawable/rounded_orange_btn"
-                android:text="기기 연결 해제"
+                android:text="다른 기기 연결하기"
                 android:textSize="18dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 app:layout_constraintBottom_toBottomOf="parent"

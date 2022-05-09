@@ -1,15 +1,16 @@
 package com.intention.android.goodmask.activity
 
 import android.Manifest
+import android.bluetooth.BluetoothDevice
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import android.location.LocationRequest
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -18,23 +19,29 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.ActivityMainBinding
+import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.fragment.HomeFragment
 import com.intention.android.goodmask.fragment.MaskFragment
-import com.intention.android.goodmask.fragment.NotificationFragment
 import com.intention.android.goodmask.fragment.StaticsFragment
 import java.util.*
 
+
 class MainActivity : AppCompatActivity() {
+
+    var maskDB : MaskDB? = null
+
     public lateinit var binding: ActivityMainBinding
     val homeFragment = HomeFragment()
     val staticsFragment = StaticsFragment()
-    val notificationFragment = NotificationFragment()
     val maskFragment = MaskFragment()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
+    private var device : BluetoothDevice? = null
     private val multiplePermissionCode = 100
     lateinit var geocoder: Geocoder
+    public lateinit var bluetoothHandler :Handler
+
 
     // 권한 목록
     private val requiredPermissionsList = arrayOf(
@@ -44,11 +51,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        maskDB = MaskDB.getInstance(this)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         allowPermissions()
-        // replaceFragment(homeFragment)
+        getLocation()
+
+        if (intent.getParcelableExtra<BluetoothDevice>("device") != null){
+            device = intent.getParcelableExtra<BluetoothDevice>("device")!!
+        }
+        Log.d("기기","device : ${device?.name}")
+
         binding.bnvMain.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.frag_homeground -> {
@@ -57,14 +72,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.frag_stat -> {
                     replaceFragment(staticsFragment)
-                    true
-                }
-                R.id.frag_noti -> {
-                    replaceFragment(notificationFragment)
-                    true
-                }
-                R.id.frag_masks -> {
-                    replaceFragment(maskFragment)
                     true
                 }
                 else -> false
@@ -88,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     geocoder = Geocoder(this, Locale.KOREA)
-                   // 위치 좌표 구하기
+                    // 위치 좌표 구하기
                     val locationRequest =
                         com.google.android.gms.location.LocationRequest.create()
                     locationRequest.priority =
@@ -105,12 +112,9 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-    // 첫 어플 실행인지 flag 역할
-    var first: Boolean = true
 
     val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            var changedAddress: String = addressInfo
             for (location in locationResult.locations) {
                 if (location != null) {
                     var latitude = location.latitude
@@ -121,7 +125,9 @@ class MainActivity : AppCompatActivity() {
                         val splitedAddr = addr.getAddressLine(0).split(" ")
                         addressList = splitedAddr
                     }
-                    addressInfo = "${addressList[1]} ${addressList[2]} ${addressList[3]}"
+                    Log.d("Test", "${addressList}")
+                    val addressListLength = addressList.size - 1
+                    addressInfo = "${addressList[addressListLength - 2]} ${addressList[addressListLength - 1]} ${addressList[addressListLength]}"
                     Log.d("Test", addressInfo)
                     dataToFragHome(latitude, longtitude, addressInfo)
                     replaceFragment(homeFragment)
@@ -136,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         bundle.putDouble("latitude", lat)
         bundle.putDouble("longitude", long)
         bundle.putString("address", addressInfo)
+        bundle.putParcelable("device", device)
         homeFragment.arguments = bundle
     }
 
@@ -149,7 +156,7 @@ class MainActivity : AppCompatActivity() {
             requestCode == multiplePermissionCode && grantResults[0] == PackageManager.PERMISSION_GRANTED
         // 권한을 허락하지 않으면 종료
         if (!locationPermissionGranted) {
-            Toast.makeText(this, "앱 설정에서 위치정보 권한에 동의해야 사용 가능합니.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "앱 설정에서 위치정보 권한에 동의해야 사용 가능합니다.", Toast.LENGTH_SHORT).show()
             finish()
         } else {
             getLocation()

@@ -165,6 +165,10 @@ class DeviceActivity : AppCompatActivity() {
     // device scan
     private fun scanDevice() {
         leDeviceListAdapter.items?.clear()
+        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
+        pairedDevices?.forEach { device ->
+            leDeviceListAdapter.addDevice(device)
+        }
         bluetoothAdapter?.startDiscovery()
         scanLeDevice(true)
         load.visibility = View.VISIBLE
@@ -202,6 +206,8 @@ class DeviceActivity : AppCompatActivity() {
                         }
                     }
                 }else existence = false
+
+
 
                 if(existence) {
                     leDeviceListAdapter.addDevice(device)

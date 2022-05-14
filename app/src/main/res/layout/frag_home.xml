@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:elevation="3dp"
-            android:text="굿마스크"
+            android:text="크리니얼가드"
             android:textColor="#000"
             android:textSize="24dp"
             android:textStyle="bold"
@@ -177,61 +177,20 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
+                <Button
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:id="@+id/filterResetBtn"
                     android:layout_gravity="center_vertical"
                     android:layout_marginStart="15dp"
+                    android:text="필터리셋"
+                    android:textSize="18dp"
+                    android:fontFamily="@font/payboocmedium"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="6dp"
                     android:layout_marginBottom="8dp"
                     android:layout_weight="1"
-                    android:background="@drawable/rounded_white_btn"
-                    android:elevation="3dp">
-
-                    <TextView
-                        android:id="@+id/batteryText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:gravity="center_horizontal"
-                        android:text="배터리 잔량"
-                        android:textColor="@color/black"
-                        android:textSize="18dp"
-                        android:textStyle="bold"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <View
-                        android:id="@+id/batteryView"
-                        android:layout_width="36dp"
-                        android:layout_height="2dp"
-                        android:layout_marginTop="12dp"
-                        android:background="#FFC063"
-                        android:foregroundGravity="center_horizontal"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/batteryText" />
-
-                    <TextView
-                        android:id="@+id/txt_battery"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
-                        android:layout_marginBottom="24dp"
-                        android:gravity="center_horizontal"
-                        android:text="50%"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                        android:textColor="@color/black"
-                        android:textSize="24dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/batteryView" />
-
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:background="@drawable/rounded_white_btn"/>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -251,7 +210,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:gravity="center_horizontal"
-                        android:text="필터 교체"
+                        android:text="필터 교체시"
                         android:textColor="@color/black"
                         android:textSize="18dp"
                         android:textStyle="bold"

@@ -32,7 +32,7 @@ class BleService : Service() {
         const val CHANNEL_ID = "notification channel"
     }
 
-    private val bleRepository: BleRepository by inject()
+//    private val bleRepository: BleRepository by inject()
 
     // ble Gatt
     private var bleGatt: BluetoothGatt? = null
@@ -42,33 +42,15 @@ class BleService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Action Received = ${intent?.action}")
 
+        if(intent?.action == "STOP"){
+            stopForegroundService()
+        }
+
         if (intent?.getStringExtra("address") != null && intent.getStringExtra("dustStatus") != null){
             address = intent.getStringExtra("address")!!
             status = intent.getStringExtra("dustStatus")!!
         }
-
-
-        when (intent?.action) {
-            Actions.START_FOREGROUND -> {
-                startForegroundService()
-            }
-            Actions.STOP_FOREGROUND -> {
-                stopForegroundService()
-
-            }
-            Actions.DISCONNECT_DEVICE->{
-                disconnectGattServer("Disconnected")
-            }
-            Actions.START_NOTIFICATION->{
-                startNotification()
-            }
-            Actions.STOP_NOTIFICATION->{
-                stopNotification()
-            }
-            Actions.WRITE_DATA->{
-                bleRepository.cmdByteArray?.let { writeData(it) }
-            }
-        }
+        startForegroundService()
         return START_STICKY
     }
 
@@ -138,10 +120,10 @@ class BleService : Service() {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 // update the connection status message
                 broadcastUpdate(Actions.GATT_CONNECTED, "Connected")
-                Log.d("connect", "Connected to the GATT server, ${bleRepository.deviceToConnect?.name}")
+
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed(Runnable {
-                    Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결되었습니다.", Toast.LENGTH_SHORT).show()
+
                 }, 0)
                 gatt.discoverServices()
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -151,7 +133,7 @@ class BleService : Service() {
             else {
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed(Runnable {
-                    Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
+
                 }, 0)
                 ActivityCompat.finishAffinity(Activity())
                 val intent = Intent(baseContext, DeviceActivity::class.java)
@@ -221,7 +203,8 @@ class BleService : Service() {
          * @param characteristic
          */
         private fun readCharacteristic(characteristic: BluetoothGattCharacteristic) {
-            var msg = characteristic.value
+            val success = bleGatt?.readCharacteristic(characteristic)
+            val msg = characteristic.value
 
             if (msg != null) {
                 Log.d("read/write/log", "read: ${String(msg)}")
@@ -244,7 +227,7 @@ class BleService : Service() {
     private fun connectDevice(device: BluetoothDevice?) {
         // update the status
         broadcastUpdate(Actions.STATUS_MSG, "Connecting to ${device?.address}")
-        bleGatt = device?.connectGatt(BleApplication.applicationContext(), false, gattClientCallback)
+
         Log.d("blegatt", "${bleGatt}")
     }
 
@@ -263,7 +246,7 @@ class BleService : Service() {
         }else {
             val handler = Handler(Looper.getMainLooper())
             handler.postDelayed(Runnable {
-                Toast.makeText(applicationContext, "${bleRepository.deviceToConnect?.name}에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show()
+
             }, 0)
             ActivityCompat.finishAffinity(Activity())
             val intent = Intent(baseContext, DeviceActivity::class.java)
@@ -276,17 +259,19 @@ class BleService : Service() {
     }
 
     private fun writeData(cmdByteArray: ByteArray) {
+        Log.d("read/write/log", "Write Data Start")
         var cmdCharacteristic : BluetoothGattCharacteristic?
-        Log.d("write/read", "blegatt : ${bleGatt?.services}")
+        Log.d("read/write/log/w", "blegatt : ${bleGatt?.services}, ${bleGatt == null}")
         if(bleGatt == null) {
             cmdCharacteristic = null
             return
         }
         else cmdCharacteristic  = BluetoothUtils.findCommandCharacteristic(bleGatt!!)
-        Log.d("write/read", "blegatt : ${bleGatt}, cmdCharacteristic : ${cmdCharacteristic?.uuid}, cmdByteArray : ${String(cmdByteArray)}")
+        cmdCharacteristic?.writeType = BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
+        Log.d("read/write/log/w", "blegatt : ${bleGatt}, cmdCharacteristic : ${cmdCharacteristic?.uuid}, cmdByteArray : ${String(cmdByteArray)}")
         // disconnect if the characteristic is not found
         if (cmdCharacteristic == null) {
-            bleRepository.cmdByteArray = null
+
             disconnectGattServer("Unable to find cmd characteristic")
             return
         }
@@ -295,10 +280,10 @@ class BleService : Service() {
         val success: Boolean = bleGatt!!.writeCharacteristic(cmdCharacteristic)
         // check the result
         if (!success) {
-            Log.e(TAG, "Failed to write command")
+            Log.e("read/write/log/w", "Failed to write command")
         }
-        else Log.d("read/write/log", "write : ${String(cmdCharacteristic.value)}")
-        bleRepository.cmdByteArray = null
+        else Log.d("read/write/log/w", "write : ${String(cmdCharacteristic.value)}")
+
 
     }
     private fun startNotification(){
@@ -317,7 +302,7 @@ class BleService : Service() {
         // READ
         bleGatt?.setCharacteristicNotification(respCharacteristic, true)
         val descriptor: BluetoothGattDescriptor? = respCharacteristic.getDescriptor(
-            UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG)
+            UUID.fromString(WRITE_READ_NOTIFY)
         )
         descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
         Log.d("descriptor", "descriptor.value : ${descriptor?.value}")
@@ -367,8 +352,6 @@ class BleService : Service() {
         }
         startForeground(1, notification)
 
-        //connect
-        connectDevice(bleRepository.deviceToConnect)
     }
 
     // 오레오 버전 이상이면 체널 등록

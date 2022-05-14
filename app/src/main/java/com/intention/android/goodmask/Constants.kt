@@ -1,8 +1,18 @@
 package com.intention.android.goodmask
 
+import okhttp3.internal.Util
 
-class Constants {
+import java.util.UUID
 
+
+internal object Constants {
+    // values have to be globally unique
+    const val INTENT_ACTION_DISCONNECT = BuildConfig.APPLICATION_ID + ".Disconnect"
+    const val NOTIFICATION_CHANNEL = BuildConfig.APPLICATION_ID + ".Channel"
+    const val INTENT_CLASS_MAIN_ACTIVITY = BuildConfig.APPLICATION_ID + ".MainActivity"
+
+    // values have to be unique within each app
+    const val NOTIFY_MANAGER_START_FOREGROUND_SERVICE = 1001
 }
 //사용자 BLE UUID Service/Rx/Tx
 const val SERVICE_UUID = "49535343-fe7d-4ae5-8fa9-9fafd205e455"
@@ -15,10 +25,11 @@ const val GENERIC_ATTRIBUTE = "00001801-0000-1000-8000-00805f9b34fb"
 const val SERVICE_CHANGED = "00002a05-0000-1000-8000-00805f9b34fb"
 const val SERVICE_FAN = "00002a00-0000-1000-8000-00805f9b34fb"
 const val CHARACTERISTIC_READ_WRITE = "49535343-6DAA-4D02-ABF6-19569ACA69FE"
-const val READ_NOTIFY = "49535343-1e4d-4bd9-ba61-23c647249616"
 const val WRITE_NOTIFY = "49535343-aca3-481c-91ec-d85e28a60318"
+const val WRITE_READ_NOTIFY = "49535343-1e4d-4bd9-ba61-23c647249616"
 const val WRITE = "49535343-8841-43F4-A8D4-ECBE34729BB3"
 const val WRITE_NOTIFIED = "49535343-026E-3A9B-954C-97DAEF17E26E"
+const val SERVICE_AUTOMATION_IO = "49535343-1815-0000-1000-8000-00805f9b34fb"
 
 //BluetoothGattDescriptor 고정
 const val CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb"

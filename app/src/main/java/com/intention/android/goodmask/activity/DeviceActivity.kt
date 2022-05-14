@@ -135,8 +135,6 @@ class DeviceActivity : AppCompatActivity() {
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(mReceiver, filter)
 
-        maskDB = MaskDB.getInstance(this)
-
         binding = ActivityDeviceBinding.inflate(layoutInflater)
         setContentView(binding.root)
         var linear = binding.parennnt
@@ -207,7 +205,6 @@ class DeviceActivity : AppCompatActivity() {
 
                 if(existence) {
                     leDeviceListAdapter.addDevice(device)
-                    Log.d("제발나와라ㅇㅖ~~","items : ${leDeviceListAdapter.items}")
                     leDeviceListAdapter.notifyDataSetChanged()
                 }
 

@@ -26,7 +26,7 @@ class BluetoothUtils {
          * @return found characteristic
          */
         fun findResponseCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-            return findCharacteristic(gatt, READ_NOTIFY)
+            return findCharacteristic(gatt, WRITE_READ_NOTIFY)
         }
 
         /**
@@ -78,8 +78,8 @@ class BluetoothUtils {
                 GENERIC_ATTRIBUTE,
                 SERVICE_CHANGED,
                 SERVICE_FAN,
-                WRITE_NOTIFY,
-                READ_NOTIFY
+                WRITE_READ_NOTIFY,
+                WRITE_NOTIFY
             )
         }
 
@@ -139,7 +139,7 @@ class BluetoothUtils {
                 SERVICE_CHANGED,
                 SERVICE_FAN,
                 WRITE_NOTIFY,
-                READ_NOTIFY
+                WRITE_READ_NOTIFY
             )
         }
 

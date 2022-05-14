@@ -1,46 +1,35 @@
 package com.intention.android.goodmask.fragment
 
 import android.Manifest
+import android.app.Activity
+import android.app.ProgressDialog
 import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.BluetoothLeScanner
+import android.content.*
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import android.os.Build
-import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.SeekBar
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.room.Room
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.gson.GsonBuilder
-import com.intention.android.goodmask.R
-import com.intention.android.goodmask.activity.BleService
+import com.intention.android.goodmask.TextUtil.HexWatcher
+//import com.intention.android.goodmask.activity.BleService
 import com.intention.android.goodmask.activity.DeviceActivity
-import com.intention.android.goodmask.activity.SplashActivity
 import com.intention.android.goodmask.databinding.FragHomeBinding
 import com.intention.android.goodmask.db.MaskDB
 import com.intention.android.goodmask.dustData.DustInfo
 import com.intention.android.goodmask.model.MaskData
 import com.intention.android.goodmask.stationData.StationInfo
-import com.intention.android.goodmask.viewmodel.BleViewModel
-import org.koin.androidx.viewmodel.ext.android.viewModel
+//import com.intention.android.goodmask.viewmodel.BleViewModel
 import org.locationtech.proj4j.BasicCoordinateTransform
 import org.locationtech.proj4j.CRSFactory
 import org.locationtech.proj4j.ProjCoordinate
@@ -51,36 +40,200 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import java.text.SimpleDateFormat
 import java.util.*
 
+import android.content.Intent
+import android.os.*
+import android.view.*
+import android.view.ContextMenu.ContextMenuInfo
+import android.widget.*
+import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.ContextCompat
+import com.intention.android.goodmask.*
+import com.intention.android.goodmask.TextUtil
+import com.intention.android.goodmask.activity.BleService
+import com.intention.android.goodmask.activity.SplashActivity
+import com.intention.android.goodmask.issc.Bluebit
+import com.intention.android.goodmask.issc.data.BLEDevice
+import com.intention.android.goodmask.issc.gatt.Gatt
+import com.intention.android.goodmask.issc.gatt.Gatt.ListenerHelper
+import com.intention.android.goodmask.issc.gatt.GattCharacteristic
+import com.intention.android.goodmask.issc.gatt.GattDescriptor
+import com.intention.android.goodmask.issc.gatt.GattService
+import com.intention.android.goodmask.issc.impl.GattTransaction
+import com.intention.android.goodmask.issc.impl.LeService
+import com.intention.android.goodmask.issc.impl.LeService.*
+import com.intention.android.goodmask.issc.reliableburst.ReliableBurstData
+import com.intention.android.goodmask.issc.reliableburst.ReliableBurstData.ReliableBurstDataListener
+import com.intention.android.goodmask.issc.util.TransactionQueue
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.nio.ByteBuffer
 
-class HomeFragment : Fragment() {
 
-    private val viewModel by viewModel<BleViewModel>()
+class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
+
     private var device : BluetoothDevice? = null
+    private lateinit var serviceIntent : Intent
     private lateinit var binding : FragHomeBinding
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    public var string_value : String = ""
+    lateinit var fusedLocationClient : FusedLocationProviderClient
     lateinit var maskFanPower: SeekBar
     lateinit var maskFanPowerText: TextView
     lateinit var disConBtn : Button
     var addressList: List<String> = listOf("서울시", "중구", "명동")
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
-    var registerState : Boolean = false
     var pastFanPower = 0
+    lateinit var mga : Gatt
     private var db : MaskDB? = null
-    var readMSG = ""
     private var fanPowerResponse = ""
+    private var inputData: String = ""
+    public var mService: LeService = LeService()
+    private var mListener: Gatt.Listener? = GattListener()
 
-    private fun registerChooser() {
-        if(registerState){
-            viewModel.unregisterReceiver()
-            registerState = false
-        }else{
-            viewModel.registBroadCastReceiver()
-            registerState = true
+    private var mDevice: BluetoothDevice? = device
+    private var mConn: SrvConnection? = null
+
+    private var mStream: OutputStream? = null
+    private var retrofit : Retrofit? = null
+    private var mQueue: TransactionQueue? = null
+
+    private val MENU_CLEAR = 0x501
+
+    private val INFO_CONTENT = "the_information_body"
+
+    var FileString = ""
+    var countx = 0
+
+    private var mMsg: TextView? = null
+    private var mToggleResponse: ToggleButton? = null
+
+    private var mTransTx: GattCharacteristic? = null
+    private var mTransRx: GattCharacteristic? = null
+    private var mAirPatch: GattCharacteristic? = null
+    private var mTransCtrl: GattCharacteristic? = null
+
+    private lateinit var maskFanPower_off : AppCompatButton
+    private lateinit var maskFanPower_1 : AppCompatButton
+    private lateinit var maskFanPower_2 : AppCompatButton
+    private lateinit var maskFanPower_3 : AppCompatButton
+    private lateinit var maskFanPower_4 : AppCompatButton
+    private lateinit var sensorBtn : AppCompatButton
+
+    private var mSuccess = 0
+    private var mFail = 0
+    private var total_bytes = 0
+    private var total_received_bytes = 0
+    private var time: String? = null
+    private var duration = 0f
+    private var speed = 0f
+    private var mStartTime: Calendar? = null
+    private var mTotalTime: Calendar? = null
+    private var mTempStartTime: Calendar? = null
+    private var mRunnable: Runnable? = null
+    private var writeThread: Handler? = null
+    private var throughput_update = true
+    private var subStation : String = ""
+
+    private val MAX_LINES = 50
+    private var mLogBuf: ArrayList<CharSequence>? = null
+
+    private var transmit: ReliableBurstData? = null
+
+    private var transmitListener: ReliableBurstDataListener? = null
+    private var reTry = false
+    private var enableTCP = false
+
+
+    fun checkResponse(p : String){
+        when(p) {
+            "N" -> {
+                getResponse("Q", p)
+            }
+            "A" -> {
+                getResponse("W", p)
+            }
+            "B" -> {
+                getResponse("E", p)
+            }
+            "C" -> {
+                getResponse("R", p)
+            }
+            "D" -> {
+                getResponse("T", p)
+            }
+            "U" -> {
+                getResponse("O", p)
+            }
+            "I" -> {
+                getResponse("P", p)
+            }
         }
+    }
+
+    fun getResponse(r: String, s: String){
+        Toast.makeText(context, "데이터 전송중...", Toast.LENGTH_SHORT).show()
+        maskFanPower_off.isEnabled = false
+        maskFanPower_1.isEnabled = false
+        maskFanPower_2.isEnabled = false
+        maskFanPower_3.isEnabled = false
+        maskFanPower_4.isEnabled = false
+        sensorBtn.isEnabled = false
+
+        var handler = Handler()
+        handler.postDelayed(object : Runnable{
+            override fun run() {
+                if (string_value != r){
+                    write(s)
+                    handler.postDelayed(this, 200);
+                    maskFanPower_off.isEnabled = true
+                    maskFanPower_1.isEnabled = true
+                    maskFanPower_2.isEnabled = true
+                    maskFanPower_3.isEnabled = true
+                    maskFanPower_4.isEnabled = true
+                    sensorBtn.isEnabled = true
+                }
+            }
+
+        },2000);
+        Toast.makeText(context, "데이터 전송 완료", Toast.LENGTH_SHORT).show()
+    }
+
+
+    inner class SrvConnection : ServiceConnection {
+        override fun onServiceConnected(
+            componentName: ComponentName,
+            service: IBinder
+        ) {
+            mService = (service as LocalBinder).service
+            mService.addListener(mListener)
+            var conn = 0
+            if (mDevice == null){
+                conn = mService.getConnectionState(mService.device)
+            }else{
+                conn = mService.getConnectionState(mDevice)
+            }
+            mService.connectGatt(activity?.applicationContext, false, mService.device)
+            mga = mService.gatt
+            if (conn != BluetoothProfile.STATE_DISCONNECTED) {
+                Log.d("connect_info", "DisConnected")
+                onDisconnected()
+            } else {
+                Log.d("connect_info", "Connected")
+                onConnected()
+            }
+        }
+
+        override fun onServiceDisconnected(componentName: ComponentName) {
+            Log.d("connect_info", "DisConnected")
+        }
+    }
+
+    private fun onDisconnected() {
+        mService.disconnect(mService.device)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -90,19 +243,38 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        Bluebit.no_burst_mode = 1
+        Bluebit.board_id = 70
+
+        mDevice = arguments?.getParcelable<BluetoothDevice>("device")
+        Log.d("mDevice", "mDevice : ${mDevice?.name}")
+
         binding = DataBindingUtil.inflate(inflater, R.layout.frag_home, container,false)
-        binding.viewModel = viewModel
+        mConn = SrvConnection()
+        mQueue = TransactionQueue(this)
+//        binding.viewModel = viewModel
+
+//        if (Bluebit.no_burst_mode == 1) {
+//            mToggleResponse!!.isChecked = true
+//        }
+        mListener = GattListener()
+        Log.d("LeService","bindService start")
+        activity?.bindService(Intent(requireContext(),LeService::class.java), mConn!!, Context.BIND_AUTO_CREATE)
+        mLogBuf = ArrayList()
+
+        /* Transparent is not a leaf activity. connect service in onCreate */
+
+        //Log.d("MADHU LOG");
+        transmit = ReliableBurstData()
+        transmitListener = ReliableBurstDataListener { reliableBurstData, transparentDataWriteChar ->
+            }
+        transmit!!.setListener(transmitListener)
+//        transmit!!.setBoardId(Bluebit.board_id)
+        val thread2 = HandlerThread("writeThread")
+        thread2.start()
+        writeThread = Handler(thread2.looper)
         val view = binding.root
-        registerState = false
-        registerChooser()
-        activity?.let { register(
-            it) }
-        Log.d("data device", "device")
-        if (arguments?.getParcelable<BluetoothDevice>("device") != null){
-            device = arguments?.getParcelable("device")
-            Log.d("data device", "${device}")
-            viewModel.connectDevice(device!!)
-        }
+        retainInstance = true
         db = MaskDB.getInstance(context?.applicationContext!!)
 
         val r = Runnable {
@@ -126,18 +298,29 @@ class HomeFragment : Fragment() {
         val lat = arguments?.getDouble("latitude")
         val long = arguments?.getDouble("longitude")
 
-        maskFanPower = binding.seekBar
-        maskFanPowerText = binding.fanTitle
+        maskFanPower_off = binding.fanpower0
+        maskFanPower_1 = binding.fanpower1
+        maskFanPower_2 = binding.fanpower2
+        maskFanPower_3 = binding.fanpower3
+        maskFanPower_4 = binding.fanpower4
+        sensorBtn = binding.sensorBtn
+
         disConBtn = binding.disconnectBtn
         disConBtn.setOnClickListener {
+            mService.disconnect(mDevice)
+            val intentS = Intent(activity,BleService::class.java)
+            intentS.action = "STOP"
+            requireContext().startForegroundService(intentS)
+            mService.onDestroy()
             activity?.finishAffinity()
-            val intent = Intent(context, DeviceActivity::class.java)
+            System.runFinalization()
+            val intent = Intent(activity, DeviceActivity::class.java)
             startActivity(intent)
             System.exit(0)
         }
         val gson = GsonBuilder().setLenient().create()
 
-        val retrofit = Retrofit.Builder()
+        retrofit = Retrofit.Builder()
             .baseUrl("http://apis.data.go.kr")
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -145,7 +328,7 @@ class HomeFragment : Fragment() {
         Log.d("lat/long", "${lat}, ${long}")
         val (tmX, tmY) = setWGS84TM(lat!!, long!!)
         Log.d("TM_XY", "$tmX / $tmY")
-        getDustInfo(retrofit, tmX, tmY)
+        getDustInfo(retrofit!!, tmX, tmY)
 
 
         // 정해진 시간마다 업데이트
@@ -153,7 +336,7 @@ class HomeFragment : Fragment() {
         timer.schedule(object : TimerTask(){
             override fun run() {
                 Log.d("getnewloc", "newloc")
-                getNewLocation(retrofit)
+                getNewLocation(retrofit!!)
 //                for (i in 1..3){
 //                    viewModel.onClickWrite('P')
 //                    Log.d("read/", "Read Start")
@@ -168,100 +351,221 @@ class HomeFragment : Fragment() {
         binding.locationText.text = address
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         binding.refreshBtn.setOnClickListener {
-            getNewLocation(retrofit)
+            getNewLocation(retrofit!!)
         }
 
         var start: Long = 0
         var end: Long = 0
         // 요일 1~7: 일~토
+
         var day = ""
-        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                maskFanPowerText.text = "팬 세기\n${p1}"
-                when(p1){
-                    0 -> {
-                        // fan stop
-                        if(pastFanPower != 0){
-                            // 팬 작동 종료
-                            if (pastFanPower != 0){
-                                end = System.currentTimeMillis()
-                                val r = Runnable {
-                                    // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
-                                    val time = db?.MaskDao()?.getTime(day)
-                                    // 아래부분은 시간 추가할 때 사하면 될
-                                    Log.e("Start and End", "$day / $start / $end")
-                                    val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
-                                    db?.MaskDao()?.update(updateDB)
-                                    val data = db?.MaskDao()?.getAll()
-                                    Log.e("DBDBDB", "${data}")
-                                    Log.e("DBDBDB", "${data?.size}")
-                                }
-                                val thread = Thread(r)
-                                thread.start()
-                            }
-                        }
-                        fanPowerIO('N')
+
+        sensorBtn.setOnClickListener {
+            if(sensorBtn.text == "ON"){
+                sensorBtn.text = "OFF"
+                checkResponse("U")
+            }else {
+                sensorBtn.text = "ON"
+                checkResponse("I")
+            }
+        }
+        checkResponse("N")
+
+        maskFanPower_off.setOnClickListener {
+            inputData = "N"
+            checkResponse("N")
+            (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_4 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_orange_btn))
+
+            if(pastFanPower != 0) {
+                // 팬 작동 종료
+                if (pastFanPower != 0) {
+                    end = System.currentTimeMillis()
+                    val r = Runnable {
+                        // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
+                        val time = db?.MaskDao()?.getTime(day)
+                        // 아래부분은 시간 추가할 때 사하면 될
+                        Log.e("Start and End", "$day / $start / $end")
+                        val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
+                        db?.MaskDao()?.update(updateDB)
+                        val data = db?.MaskDao()?.getAll()
+                        Log.e("DBDBDB", "${data}")
+                        Log.e("DBDBDB", "${data?.size}")
                     }
-                    1 -> {
-                        // fan start
-                        // 팬 작동 시작
-                        if (pastFanPower == 0){
-                            start = System.currentTimeMillis()
-                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-                        }
-                        fanPowerIO('A')
-                    }
-                    2 -> {
-                        // fan start
-                        if (pastFanPower == 0){
-                            start = System.currentTimeMillis()
-                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-                        }
-                        fanPowerIO('B')
-                    }
-                    3 -> {
-                        // fan start
-                        if (pastFanPower == 0){
-                            start = System.currentTimeMillis()
-                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-                        }
-                        fanPowerIO('C')
-                    }
-                    4 -> {
-                        // fan start
-                        if (pastFanPower == 0){
-                            start = System.currentTimeMillis()
-                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-                        }
-                        fanPowerIO('D')
-                    }
+                    val thread = Thread(r)
+                    thread.start()
 
                 }
-                pastFanPower = p1
             }
+            pastFanPower = 0
+        }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {
+        maskFanPower_1.setOnClickListener {
+            inputData = "A"
+            checkResponse("A")
+            (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_4 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_orange_btn))
+
+            if (pastFanPower == 0){
+                start = System.currentTimeMillis()
+                day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+
             }
-            override fun onStopTrackingTouch(p0: SeekBar?) {
+            pastFanPower = 1
+        }
+
+        maskFanPower_2.setOnClickListener {
+            inputData = "B"
+            checkResponse("B")
+            (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_4 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_orange_btn))
+
+            if (pastFanPower == 0){
+                start = System.currentTimeMillis()
+                day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+
             }
+            pastFanPower = 2
+        }
 
-        })
+        maskFanPower_3.setOnClickListener {
+            inputData = "C"
+            checkResponse("C")
+            (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_4 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_orange_btn))
 
-        initObserver(binding)
-        registerChooser()
+            if (pastFanPower == 0){
+                start = System.currentTimeMillis()
+                day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+
+            }
+            pastFanPower = 3
+        }
+
+        maskFanPower_4.setOnClickListener {
+            inputData = "D"
+            checkResponse("D")
+            (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
+            (maskFanPower_4 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_orange_btn))
+
+            if (pastFanPower == 0){
+                start = System.currentTimeMillis()
+                day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+
+            }
+            pastFanPower = 4
+        }
+
+//        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+//            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+//                maskFanPowerText.text = "팬 세기\n${p1}"
+//                when(p1){
+//                    0 -> {
+//                        // fan stop
+//
+//                        if(pastFanPower != 0){
+//                            // 팬 작동 종료
+//                            if (pastFanPower != 0){
+//                                end = System.currentTimeMillis()
+//                                val r = Runnable {
+//                                    // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
+//                                    val time = db?.MaskDao()?.getTime(day)
+//                                    // 아래부분은 시간 추가할 때 사하면 될
+//                                    Log.e("Start and End", "$day / $start / $end")
+//                                    val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
+//                                    db?.MaskDao()?.update(updateDB)
+//                                    val data = db?.MaskDao()?.getAll()
+//                                    Log.e("DBDBDB", "${data}")
+//                                    Log.e("DBDBDB", "${data?.size}")
+//                                }
+//                                val thread = Thread(r)
+//                                thread.start()
+//
+//                            }
+//                        }
+//                        checkResponse("N")
+//                        inputData = "N"
+//                    }
+//                    1 -> {
+//                        // fan start
+//                        // 팬 작동 시작
+//                        if (pastFanPower == 0){
+//                            start = System.currentTimeMillis()
+//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+//
+//                        }
+//                        checkResponse("A")
+//                        inputData = "A"
+//                    }
+//                    2 -> {
+//                        // fan start
+//                        if (pastFanPower == 0){
+//                            start = System.currentTimeMillis()
+//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+//                        }
+//                        checkResponse("B")
+//                        inputData = "B"
+//                    }
+//                    3 -> {
+//                        // fan start
+//                        if (pastFanPower == 0){
+//                            start = System.currentTimeMillis()
+//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+//                        }
+//                        checkResponse("C")
+//                        inputData = "C"
+//                    }
+//                    4 -> {
+//                        // fan start
+//                        if (pastFanPower == 0){
+//                            start = System.currentTimeMillis()
+//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
+//                        }
+//                        checkResponse("D")
+//                        inputData = "D"
+//                    }
+//
+//                }
+//                pastFanPower = p1
+//            }
+//
+//            override fun onStartTrackingTouch(p0: SeekBar?) {
+//            }
+//            override fun onStopTrackingTouch(p0: SeekBar?) {
+//            }
+//
+//        })
+
+//        initObserver(binding)
+//        registerChooser()
 
         return view
     }
 
-    private fun initObserver(binding: FragHomeBinding?) {
-        viewModel.readTxt?.observe(this,{
-            val now = System.currentTimeMillis()
-            var bstatus = ""
-            binding?.txtBattery?.text = bstatus
-            val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
-            val timestamp = datef.format(Date(now))
-        })
-    }
+//    private fun initObserver(binding: FragHomeBinding?) {
+//        viewModel.readTxt?.observe(this,{
+//            val now = System.currentTimeMillis()
+//            var bstatus = ""
+//            binding?.txtBattery?.text = bstatus
+//            val datef = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+//            val timestamp = datef.format(Date(now))
+//        })
+//    }
 
     fun checkIfFragmentAttached(operation: Context.() -> Unit) {
         if (isAdded && context != null) {
@@ -309,11 +613,6 @@ class HomeFragment : Fragment() {
         return addressInfo
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        if(registerState) viewModel.unregisterReceiver()
-    }
-
     // 위/경도 -> TM좌표로 변환
     private fun setWGS84TM(lat: Double, lon: Double): Pair<Double, Double> {
         Log.d("TMchanger", lat.toString() + "," + lon.toString())
@@ -340,10 +639,6 @@ class HomeFragment : Fragment() {
     public fun checkLongLatNull(long: Double?, lat:Double?) : Boolean{
         if (long == null || lat == null) return true
         else return false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     // 가장 가까운 측정소를 구하고 미세먼지 농도 데이터 가져오기
@@ -373,49 +668,47 @@ class HomeFragment : Fragment() {
             })
     }
 
-    private fun register(ctx: Context) {
-        LocalBroadcastManager.getInstance(ctx).registerReceiver(
-            sendReceiver, IntentFilter("sendMSG")
-        )
-    }
-
-    fun unRegister(ctx: Context) {
-        LocalBroadcastManager.getInstance(ctx).registerReceiver(
-            sendReceiver, IntentFilter("sendMSG")
-        )
-    }
-
-    private val sendReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            readMSG = intent.getStringExtra("msg")!!
-            Log.d("read/write/log", "fanPowerResponse : ${readMSG}")
-            when(readMSG){
-//                "Z" -> binding.txtBattery.text = "0%"
-//                "L" -> binding.txtBattery.text = "25%"
-//                "M" -> binding.txtBattery.text = "50%"
-//                "H" -> binding.txtBattery.text = "75%"
-//                "F" -> binding.txtBattery.text = "100%"
-                "Y" -> fanPowerResponse = "Y"
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    private fun fanPowerIO(inputData : Char){
+//        Toast.makeText(context, "데이터 전송중..", Toast.LENGTH_SHORT).show()
+//        for (i in 1..5){
+//            viewModel.onClickWrite(inputData)
+//            Log.d("read/write/log", "Read Start")
+//
+//            viewModel.onClickRead()
+//
+//        }
+//        Thread.sleep(3000)
+//    }
+    private fun checkIO(inputData: Char){
+        Log.d("read/write/log", "Read End fanpowerresponse : ${fanPowerResponse}, inputData : ${inputData}")
+        when(inputData){
+            'N' -> if(fanPowerResponse == "Q"){
+                Toast.makeText(context, "팬세기 데이터 송/수신 : Q OK", Toast.LENGTH_SHORT).show()
+                fanPowerResponse = ""
+                return
             }
-        }
-    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun fanPowerIO(inputData : Char){
-        Toast.makeText(context, "데이터 전송중..", Toast.LENGTH_SHORT).show()
-        for (i in 1..5){
-            viewModel.onClickWrite(inputData)
-            Log.d("read/write/log", "Read Start")
-
-            viewModel.onClickRead()
-
-        }
-        Log.d("read/write/log", "Read End fanpowerresponse : ${fanPowerResponse}")
-        Thread.sleep(3000)
-        if(fanPowerResponse == "Y"){
-            Toast.makeText(context, "팬세기 데이터 송/수신 : OK", Toast.LENGTH_SHORT).show()
-            fanPowerResponse = ""
-            return
+            'A' ->if(fanPowerResponse == "W"){
+                Toast.makeText(context, "팬세기 데이터 송/수신 : W OK", Toast.LENGTH_SHORT).show()
+                fanPowerResponse = ""
+                return
+            }
+            'B' ->if(fanPowerResponse == "E"){
+                Toast.makeText(context, "팬세기 데이터 송/수신 : E OK", Toast.LENGTH_SHORT).show()
+                fanPowerResponse = ""
+                return
+            }
+            'C' ->if(fanPowerResponse == "R"){
+                Toast.makeText(context, "팬세기 데이터 송/수신 : R OK", Toast.LENGTH_SHORT).show()
+                fanPowerResponse = ""
+                return
+            }
+            'D' ->if(fanPowerResponse == "T"){
+                Toast.makeText(context, "팬세기 데이터 송/수신 : T OK", Toast.LENGTH_SHORT).show()
+                fanPowerResponse = ""
+                return
+            }
         }
         Toast.makeText(context, "데이터가 수신되지 않습니다.", Toast.LENGTH_SHORT).show()
     }
@@ -425,24 +718,10 @@ class HomeFragment : Fragment() {
         // 포그라운드 데이터 전달 위함
         Log.e("Give Address", "데이터 전달 $address")
         Log.e("Home to Service Status", status)
-        val intent = Intent(context, BleService::class.java)!!
-        intent.putExtra("address", address)
-        intent.putExtra("dustStatus", status)
-
-        if (arguments?.getParcelable<BluetoothDevice>("device") != null){
-            device = arguments?.getParcelable("device")
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context?.startForegroundService(intent)
-            if(device != null){
-                viewModel.connectDevice(device!!)
-            }
-        } else{
-            context?.startService(intent)
-            if(device != null){
-                viewModel.connectDevice(device!!)
-            }
-        }
+        serviceIntent = Intent(activity?.applicationContext, BleService::class.java)
+        serviceIntent.putExtra("address", address)
+        serviceIntent.putExtra("dustStatus", status)
+        requireContext().startForegroundService(serviceIntent)
     }
 
     // 해당 측정소에서 미세먼지 데이터 가져오기
@@ -458,8 +737,9 @@ class HomeFragment : Fragment() {
                     if (dustNum != "-") {
                         Log.d("Dust Num", "미세먼지 농도: $dustNum, 측정소는 $stationName")
                         if (addressInfo == "서울시 중구 명동"){
-                            binding.locationText.text = subStation
-                        }
+                            binding.locationText.text = stationName
+                            address = stationName
+                        }else binding.locationText.text = stationName
                         binding.dust.text = "미세먼지 치수: $dustNum"
                         val status: String = setDustUI(dustNum!!.toInt())
                         // 서비스 클래스로 데이터 전송
@@ -535,6 +815,602 @@ class HomeFragment : Fragment() {
         }
         return status
     }
+
+    private fun didGetData(s: String) {
+        //Log.d("didGetData");
+        synchronized(mQueue!!) {
+
+            //mQueue.onConsumed();
+            msgShow("", "\n")
+            msgShow("wrote ", s)
+            msgShow("", "\n")
+            if ((mQueue!!.size() == 0) && (mTotalTime != null) && (mRunning != true) && (throughput_update == true)) {
+                val elapse: Long = (Calendar.getInstance()
+                    .getTimeInMillis()
+                        - mTotalTime!!.getTimeInMillis())
+                com.intention.android.goodmask.issc.util.Log.d(
+                    (" total_bytes :" + total_bytes + " current time: " +
+                            Calendar.getInstance().get(Calendar.MINUTE)
+                            + " : " + Calendar.getInstance().get(Calendar.SECOND)
+                            + " : " + Calendar.getInstance().get(Calendar.MILLISECOND))
+                )
+                com.intention.android.goodmask.issc.util.Log.d(" elapse in milliseconds :" + elapse)
+                time = (elapse / 1000).toString() + "." + (elapse % 1000)
+                duration = elapse.toFloat() / 1000
+                speed = (total_bytes.toFloat() / (elapse).toFloat()) * (1000.00.toFloat())
+                com.intention.android.goodmask.issc.util.Log.d("value : +" + speed)
+                //Handler handler = new Handler();
+                val runnable: Runnable = object : Runnable {
+                    override fun run() {
+                        msgShow(
+                            "time", ("spent " + (duration)
+                                    + " seconds" + "  Throughput: " + (speed)
+                                    + " bytes/sec")
+                        )
+                        total_bytes = 0
+                        mSuccess = 0
+                        mFail = 0
+                        mTotalTime = null
+                    }
+                }
+                writeThread!!.postDelayed(runnable, 3000)
+                mTempStartTime = mStartTime
+                mStartTime = null
+                throughput_update = false
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        //mQueue.clear();
+        mQueue!!.destroy()
+        //disableNotification();
+        closeStream()
+        //mViewHandler.removeCallbacksAndMessages(null);
+
+        /*
+		 * Transparent is not a leaf activity. disconnect/unregister-listener in
+		 * onDestroy
+		 */mService.rmListener(mListener)
+        requireActivity().unbindService(mConn!!)
+        super.onDestroy()
+    }
+
+    private fun enableNotification() {
+        val set: Boolean = mService.setCharacteristicNotification(mTransTx, true)
+        val dsc = mTransTx?.getDescriptor(Bluebit.DES_CLIENT_CHR_CONFIG)
+        dsc?.value = dsc?.getConstantBytes(GattDescriptor.ENABLE_NOTIFICATION_VALUE)
+        mService.writeDescriptor(dsc)
+        //tx_ch.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+
+        //mService.writeCharacteristic(mTransTx);
+        /*GattTransaction transaction = new GattTransaction(dsc,
+				dsc.getConstantBytes(GattDescriptor.ENABLE_NOTIFICATION_VALUE));
+		mQueue.add(transaction);*/
+        // mQueue.process();
+
+        /*
+		 * boolean success = mService.writeDescriptor(dsc);
+		 * Log.d("writing enable descriptor:" + success);
+		 */
+    }
+
+    private fun disableNotification() {
+        val set: Boolean = mService.setCharacteristicNotification(mTransTx, false)
+        com.intention.android.goodmask.issc.util.Log.d("set notification:$set")
+        val dsc = mTransTx?.getDescriptor(Bluebit.DES_CLIENT_CHR_CONFIG)
+        dsc?.value = dsc?.getConstantBytes(GattDescriptor.DISABLE_NOTIFICATION_VALUE)
+        val transaction = GattTransaction(
+            dsc,
+            dsc?.getConstantBytes(GattDescriptor.DISABLE_NOTIFICATION_VALUE)
+        )
+        // mQueue.add(transaction);
+        // mQueue.process();
+        val success: Boolean = mService.writeDescriptor(dsc)
+    }
+
+    private fun closeStream() {
+        com.intention.android.goodmask.issc.util.Log.d("closeStream")
+        try {
+            if (mStream != null) {
+                mStream!!.flush()
+                mStream!!.close()
+            }
+        } catch (e: IOException) {
+            msgShow("close stream fail", e.toString())
+            e.printStackTrace()
+        }
+        mStream = null
+    }
+
+    private fun writeToStream(data: ByteArray) {
+        com.intention.android.goodmask.issc.util.Log.d("inside writeToStream mStream:$mStream")
+        //msgShow("recv", data);
+        if (mStream != null) {
+            try {
+                mStream!!.write(data, 0, data.size)
+                mStream!!.flush()
+            } catch (e: IOException) {
+                msgShow("write fail", e.toString())
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Received data from remote when enabling Echo.
+     *
+     * Display the data and transfer back to device.
+     */
+
+    private fun onReciveData(data: ByteArray?) {
+        //Log.d("[R}");
+        val sb = StringBuffer()
+        if (data == null) {
+            sb.append("Received empty data")
+            val msg = Bundle()
+            com.intention.android.goodmask.issc.util.Log.d("going for msg.putCharSequence(INFO_CONTENT, sb)")
+            msg.putCharSequence(INFO_CONTENT, sb)
+        } else {
+            val recv = String(data)
+            msgShow("", recv)
+            writeToStream(data)
+        }
+    }
+
+    private fun msgShow(prefix: CharSequence?, cs: CharSequence?) {
+        val sb = StringBuffer()
+
+        //Log.d("count:" + countx);
+        countx++
+        sb.append(prefix)
+        //sb.append(": ");
+        sb.append(cs)
+        //Log.d(sb.toString());
+        val msg = Bundle()
+        msg.putCharSequence(INFO_CONTENT, sb.toString())
+        //for(int i = 30000; i > 0 ; i--);
+    }
+
+    /**
+     * Write string to remote device.
+     */
+    private fun write(cs: CharSequence) {
+        val bytes = cs.toString().toByteArray()
+        com.intention.android.goodmask.issc.util.Log.d("write(CharSequence cs)")
+        write(bytes)
+    }
+
+    /**
+     * Write data to remote device.
+     */
+    private fun write(bytes: ByteArray) {
+        com.intention.android.goodmask.issc.util.Log.d(" write before writeThread.post")
+        writeThread!!.post {
+            synchronized((mQueue)!!) {
+                val buf: ByteBuffer = ByteBuffer.allocate(bytes.size)
+                buf.put(bytes)
+                buf.position(0)
+                //Log.d(" write inside thread run TOATAL LENGTH :" + bytes.length);
+                if (transmit!!.transmitSize() == 0) {
+                    transmit?.setBoardId(70)
+                    transmit!!.setTransmitSize()
+                }
+                Bluebit.toatal_transactions = bytes.size / (transmit!!.transmitSize())
+                Log.d("transmit_info", "size : ${transmit!!.transmitSize()}, transmit : ${transmit}")
+                if (bytes.size % (transmit!!.transmitSize()) != 0) {
+                    Bluebit.toatal_transactions = Bluebit.toatal_transactions+1
+                }
+                while (buf.remaining() != 0) {
+                    val size: Int =
+                        if ((buf.remaining() > transmit!!.transmitSize()))
+                            transmit!!.transmitSize() else buf.remaining()
+                    val dst: ByteArray = ByteArray(size)
+                    buf.get(dst, 0, size)
+                    Log.d("transaction", "${mTransTx}, ${dst}")
+                    val t: GattTransaction = GattTransaction(mTransTx, dst)
+                    mQueue!!.add(t)
+                    if (mQueue!!.size() == 1) {
+                        mQueue!!.process()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onTimerSend(count: Int, size: Int) {
+        /* max is 20 */
+        //String out = String.format("%020d", count);
+        var count = count
+        var out = ""
+        val tempcount = count
+        if (out.length > size) {
+            // if too long
+            out = out.substring(out.length - size)
+        }
+        com.intention.android.goodmask.issc.util.Log.d("count = " + count + "size = " + size)
+        count++
+        while (out.length < (size - 1)) {
+
+            //if (count == 0) count = 1;
+            if (count > 9) count = count % 10
+            val count1 = String.format("%d", count)
+            out = out + count
+        }
+        out = out + "\n"
+        com.intention.android.goodmask.issc.util.Log.d("String$out")
+        //Log.d(out);
+        //out = out + "\n";
+        //Log.d("After newline"+out);
+        FileString = FileString + out
+        com.intention.android.goodmask.issc.util.Log.d("tempcount :$tempcount")
+
+        /*if (tempcount == 99) {
+
+           File path = getApplicationContext().getFilesDir();
+            Log.d("Path: "+path);
+            //File file = new File(path, "my-file-name.txt");
+            try {
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getApplicationContext().openFileOutput("config.txt", Context.MODE_PRIVATE));
+                outputStreamWriter.write(FileString);
+                outputStreamWriter.close();
+            }
+            catch (IOException e) {
+                Log.e("Exception", "File write failed: " + e.toString());
+            }
+        }*/msgShow("send", out)
+        write(out)
+    }
+
+    private var mRunning = false
+
+    /**
+     * Add message to UI.
+     */
+    private fun appendMsg(msg: CharSequence) {
+        val sb = StringBuffer()
+        sb.append(msg)
+        //sb.append("\n");
+        mLogBuf!!.add(sb)
+        // we don't want to display too many lines
+        com.intention.android.goodmask.issc.util.Log.d("appendMsg")
+        if (mLogBuf!!.size > MAX_LINES) {
+            mLogBuf!!.removeAt(0)
+        }
+        val text = StringBuffer()
+        for (i in mLogBuf!!.indices) {
+            text.append(mLogBuf!![i])
+        }
+        //Log.d("appendMsg text"+text);
+        mMsg!!.text = text
+    }
+
+    private fun onConnected() {
+        val list = mService.getServices(mDevice)
+        Log.d("connected","onConnected")
+        if (list == null || list.size == 0) {
+            Log.d("connected","no services, do discovery")
+            mService.discoverServices(mDevice)
+        } else {
+            onDiscovered()
+        }
+    }
+
+    private fun onDiscovered() {
+        var proprietary: GattService = mService.getService(
+            mDevice,
+            Bluebit.SERVICE_ISSC_PROPRIETARY
+        )
+        mTransTx = proprietary.getCharacteristic(Bluebit.CHR_ISSC_TRANS_TX)
+        mTransRx = proprietary.getCharacteristic(Bluebit.CHR_ISSC_TRANS_RX)
+        mAirPatch = proprietary.getCharacteristic(Bluebit.CHR_AIR_PATCH)
+        mTransCtrl = proprietary.getCharacteristic(Bluebit.CHR_ISSC_TRANS_CTRL)
+        enableTCP = false
+
+        enableNotification()
+
+            //proprietary = mService.getService(mDevice, Bluebit.SERVICE_ISSC_AIR_PATCH_SERVICE);
+            //if (proprietary.getImpl() != null) {
+            //	mAirPatch = proprietary.getCharacteristic(Bluebit.CHR_AIR_PATCH);
+            //}
+
+            //onSetEcho(mToggleEcho.isChecked());
+            //enableNotification();
+            //sendVendorMPEnable();
+
+            /*
+		BluetoothGatt gatt = (BluetoothGatt) mService.getGatt().getImpl();
+		if (gatt != null) {
+
+			BluetoothGattCharacteristic air_ch_temp = (BluetoothGattCharacteristic) mTransTx
+					.getImpl();
+
+			BluetoothGattCharacteristic air_ch = (BluetoothGattCharacteristic) mTransCtrl
+					.getImpl();
+
+            BluetoothGattCharacteristic tx_ch = (BluetoothGattCharacteristic) mTransTx
+                    .getImpl();
+
+
+			//transmit.enableReliableBurstTransmit(gatt, air_ch);
+            //transmit.enableReliableBurstTransmit(gatt, air_ch_temp);
+            //enableNotification();
+		}*/
+            //enableNotification();
+
+    }
+
+    private fun enableTCP() {
+        val gatt: BluetoothGatt? = mService.getGatt().getImpl() as BluetoothGatt?
+        if (gatt != null) {
+            val air_ch = mTransCtrl?.getImpl() as BluetoothGattCharacteristic
+            transmit!!.enableReliableBurstTransmit(gatt, air_ch)
+        }
+    }
+
+    override fun onTransact(t: GattTransaction) {
+        Log.d("Transact","Home transperant ${t}, ${t.isForDescriptor}, , ${String(t.value)}");
+        if (total_bytes == 0) {
+            throughput_update = true
+            mTotalTime = Calendar.getInstance()
+        }
+        if (t.isForDescriptor) {
+            val dsc = t.desc
+            val success: Boolean = mService.writeDescriptor(dsc)
+            Log.d(
+                "transact",("writing " + dsc.characteristic.uuid.toString()
+                        + " descriptor:" + success)
+            )
+        } else {
+            //Log.d("onTransact t.isForDescriptor() false");
+            Log.d("transact", "t.chr.value = ${t.chr}, ${t.desc}, ${t.value}")
+            t.chr.value = t.value
+            //Log.d("Value : " + t.value);
+            val str1 = String(t.value)
+            //Log.d("Value (string) : "+ str1);
+            if (t.isWrite) {
+                //Log.d(".WRITE_TYPE_DEFAULT"+ GattCharacteristic.WRITE_TYPE_DEFAULT);
+                //Log.d("GattCharacteristic.WRITE_TYPE_NO_RESPONSE"+ GattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                val type = GattCharacteristic.WRITE_TYPE_DEFAULT
+                t.chr.setWriteType(type)
+                //Log.d("mToggleResponse.isChecked()  ;  type : "+mToggleResponse.isChecked() +type);
+                //Log.d("!t.chr.getUuid().equals(Bluebit.CHR_AIR_PATCH)"+ !t.chr.getUuid().equals(Bluebit.CHR_AIR_PATCH));
+                if ((type == GattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                            && t.chr.uuid != Bluebit.CHR_AIR_PATCH)
+                ) {
+
+                    synchronized((mQueue)!!) {
+                        com.intention.android.goodmask.issc.util.Log.d("calling canSendReliableBurstTransmit")
+                        if (transmit!!.canSendReliableBurstTransmit()) {
+                            val ch: BluetoothGattCharacteristic = t.chr
+                                .getImpl() as BluetoothGattCharacteristic
+                            com.intention.android.goodmask.issc.util.Log.d("calling reliableBurstTransmit")
+                            transmit!!.reliableBurstTransmit(t.value, ch)
+                        } else {
+                            mQueue!!.addFirst(t)
+                            mQueue!!.onConsumed()
+                        }
+                    }
+                } else {
+                    if (mService.gatt == null){
+                        mService.mGatt = mga
+                    }
+                    mService.writeCharacteristic(t.chr)
+                }
+            } else {
+                mService.readCharacteristic(t.chr)
+            }
+        }
+    }
+
+
+   inner class GattListener() : ListenerHelper("ActivityTransparent") {
+        override fun onConnectionStateChange(gatt: Gatt, status: Int, newState: Int) {
+            Log.d("gattlistener","onConnectionStateChange: DATA TRANSFER ")
+            if (mDevice?.getAddress() != gatt.device.address) {
+                // not the device I care about
+                Log.d("gattlistener", "not the device connected")
+                return
+            }
+            if (reTry == true) {
+                Log.d("gattlistener", "not the device connected")
+                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    mService.connectGatt(activity, false, mDevice)
+                } else {
+                    transmit = null
+                    com.intention.android.goodmask.issc.util.Log.d("ReliableBurstData :DATA TRANSFER")
+                    transmit = ReliableBurstData()
+                    transmit?.setListener(transmitListener)
+                    onConnected()
+                    com.intention.android.goodmask.issc.util.Log.d("setting board id for trnasmitdata" + Bluebit.board_id)
+                    transmit?.setBoardId(Bluebit.board_id)
+                }
+
+                return
+            }
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                onConnected()
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: Gatt, status: Int) {
+            onDiscovered()
+        }
+
+        override fun onCharacteristicRead(
+            gatt: Gatt, charac: GattCharacteristic,
+            status: Int
+        ) {
+            val value = charac.value
+            com.intention.android.goodmask.issc.util.Log.d("get value, byte length:" + value.size)
+            for (i in value.indices) {
+                Log.d("onCharacteristicRead","[" + i + "]" + java.lang.Byte.toString(value[i]))
+            }
+            mQueue?.let { synchronized(it) { mQueue?.onConsumed() } }
+        }
+
+        override fun onCharacteristicChanged(gatt: Gatt, chrc: GattCharacteristic) {
+            if ((chrc.uuid == Bluebit.CHR_ISSC_TRANS_TX)) {
+                var value = chrc.value
+                string_value = String(chrc.value)
+                Log.d("characteristichange","value : ${String(value)}")
+                total_received_bytes = total_received_bytes + value.size
+                com.intention.android.goodmask.issc.util.Log.d("get value, byte length:" + value.size)
+                com.intention.android.goodmask.issc.util.Log.d("total_received_bytes : $total_received_bytes")
+                var buffer = ""
+                for (i in value.indices) {
+                    buffer = buffer + String.format("%02X ", value[i])
+                }
+                //msgShow("send", cs);
+                onReciveData(chrc.value)
+                //onEcho(arr);
+                if (mRunnable != null) {
+                    //byte[] value = chrc.getValue();
+                    //String buffer = "";
+                    for (i in value.indices) {
+                        buffer = buffer + String.format("%02X ", value[i])
+                    }
+                    //onReciveData(chrc.getValue());
+                }
+            }
+            if (Bluebit.board_id == 70) {
+                if ((chrc.uuid == Bluebit.CHR_ISSC_TRANS_CTRL)) {
+                    //Log.d(" onCharacteristicChanged Bluebit.CHR_ISSC_TRANS_CTRL " + Bluebit.CHR_ISSC_TRANS_CTRL);
+                    transmit?.decodeReliableBurstTransmitEvent(chrc.value)
+                }
+            }
+        }
+
+        override fun onCharacteristicWrite(
+            gatt: Gatt, charac: GattCharacteristic,
+            status: Int
+        ) {
+            com.intention.android.goodmask.issc.util.Log.d("onCharacteristicWrite")
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                reTry = false
+            }
+            val value = charac.value
+            //Log.d("Response length = "+ value.length);
+            //Log.d("Response  = "+ value[0]);
+            if (value.size == 1 && value[0].toInt() == 20) {
+                return
+            }
+            //charac.
+            /*for(byte i = 0; i< value.length;i++) {
+
+				Log.d(" Value "+ i +" : "+value[i]);
+
+			}*/
+            val ch = charac
+                .impl as BluetoothGattCharacteristic
+            if (transmit!!.isReliableBurstTransmit(ch)) {
+                if (status == Gatt.GATT_SUCCESS) {
+                    if (status == Gatt.GATT_SUCCESS) {
+                        if (Bluebit.board_id != 78) {
+                            mSuccess += charac.value.size
+                        }
+                    } else {
+                        mFail += charac.value.size
+                    }
+                    if (Bluebit.board_id != 78) {
+                        total_bytes = total_bytes + charac.value.size
+                    }
+                    com.intention.android.goodmask.issc.util.Log.d(
+                        ("onCharacteristicWrite isReliableBurstTransmit success transmit.isBusy()" +
+                                " " + transmit!!.isBusy())
+                    )
+                    if (!transmit!!.isBusy() && (charac.uuid == Bluebit.CHR_AIR_PATCH)) {
+                        enableNotification()
+                    }
+                }
+            } else {
+                mQueue?.let {
+                    synchronized(it) {
+                        //Log.d("onCharacteristicWrite callback");
+                        mQueue!!.onConsumed()
+                    }
+                }
+                if ((charac.uuid == Bluebit.CHR_AIR_PATCH)) {
+                    com.intention.android.goodmask.issc.util.Log.i("Write AirPatch Characteristic:$status")
+                } else {
+                    //Log.d("---------------");
+                    if (status == Gatt.GATT_SUCCESS) {
+                        mSuccess += charac.value.size
+                    } else {
+                        mFail += charac.value.size
+                    }
+                    total_bytes = total_bytes + charac.value.size
+                    val s = String.format(
+                        "%d bytes , success= %d, fail= %d, pending= %d, TOTAL=%d",
+                        charac.value.size, mSuccess, mFail,
+                        mQueue!!.size(), total_bytes
+                    )
+                    didGetData(s)
+                }
+            }
+        }
+
+        override fun onDescriptorWrite(gatt: Gatt, dsc: GattDescriptor, status: Int) {
+            val ch = dsc
+                .characteristic.impl as BluetoothGattCharacteristic
+            com.intention.android.goodmask.issc.util.Log.d("onDescriptorWrite")
+            if (Bluebit.board_id == 70) {
+                if (!enableTCP) {
+                    enableTCP = true
+                    enableTCP()
+                } else {
+                    enableTCP = false
+                    //Log.d("### TEST!");
+                }
+            }
+            if (status == 5) {
+                reTry = true
+                return
+            }
+            if (reTry && status == 133) {
+                mService.disconnect(mDevice)
+                return
+            }
+            if (transmit!!.isReliableBurstTransmit(ch)) {
+                if (status == Gatt.GATT_SUCCESS) {
+                    if (!transmit!!.isBusy()) {
+                        if (mQueue!!.size() > 0) {
+                            mQueue!!.process()
+                        } else {
+                            enableNotification()
+                        }
+                    }
+                }
+            } else {
+                mQueue!!.onConsumed()
+                if ((dsc.characteristic.uuid
+                            == Bluebit.CHR_AIR_PATCH)
+                ) {
+                    if (status == Gatt.GATT_SUCCESS) {
+                        com.intention.android.goodmask.issc.util.Log.i("Write AirPatch Descriptor Success")
+                    }
+                } else {
+                    if (status == Gatt.GATT_SUCCESS) {
+                        val value = dsc.value
+                        if (Arrays
+                                .equals(
+                                    value,
+                                    dsc.getConstantBytes(GattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                                )
+                        ) {
+                        } else if (Arrays
+                                .equals(
+                                    value,
+                                    dsc.getConstantBytes(GattDescriptor.DISABLE_NOTIFICATION_VALUE)
+                                )
+                        ) {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 interface StationService {

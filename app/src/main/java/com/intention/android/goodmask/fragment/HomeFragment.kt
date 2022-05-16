@@ -283,7 +283,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             if (data!!.size == 0){
                 Log.e("First!!", "첫 실행입니다.")
                 for (i in 1..7){
-                    val firstDB = MaskData(i.toString(), 0.toLong(), 0.toLong(), 0.toLong());
+                    val firstDB = MaskData(i.toString(), 0.toLong(), 0.toLong(), 0.toLong(), 0.toLong());
                     db?.MaskDao()?.insert(firstDB)
                 }
                 val data = db?.MaskDao()?.getAll()
@@ -371,6 +371,38 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         }
         checkResponse("N")
 
+        // 사용시간 받아오기
+        var useTime = 0.toLong()
+
+        val rr = Runnable {
+            useTime = db?.MaskDao()?.getTotal()!!
+        }
+        val rrThread = Thread(rr)
+        rrThread.start()
+        Log.e("total in Home", useTime.toString())
+
+        // filter 리셋 버튼 클릭 시
+        binding.filterResetBtn.setOnClickListener {
+            val r = Runnable {
+                db?.MaskDao()?.resetTotal()
+                val data = db?.MaskDao()?.getAll()
+                Log.e("filter reset data", "${data}")
+                Log.e("filter reset data size", "${data?.size}")
+            }
+            val thread = Thread(r)
+            thread.start()
+            useTime = 0
+            Toast.makeText(context, "필터가 교체되었습니다.", Toast.LENGTH_SHORT).show()
+        }
+        // 필터교체까지 남은 날을 ms -> 일로 표현
+        Log.e("total in Home2", useTime.toString())
+        val lastDay = (60 * 1000 * 60 * 24 * 30 - useTime) / (1000 * 60 * 60 * 24)
+        binding.filterDay.text = "D-$lastDay"
+
+        // 교체를 안한지 한달이 넘으면 주황색 배경으로 바뀜
+        if(lastDay < 0)
+            binding.filterChangeView.setBackgroundResource(R.drawable.rounded_orange_btn)
+
         maskFanPower_off.setOnClickListener {
             inputData = "N"
             checkResponse("N")
@@ -387,9 +419,10 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     val r = Runnable {
                         // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
                         val time = db?.MaskDao()?.getTime(day)
+                        val total = db?.MaskDao()?.getTotal()
                         // 아래부분은 시간 추가할 때 사하면 될
                         Log.e("Start and End", "$day / $start / $end")
-                        val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
+                        val updateDB = MaskData(day, start, end.toLong(), end - start + time!!, end - start + total!!)
                         db?.MaskDao()?.update(updateDB)
                         val data = db?.MaskDao()?.getAll()
                         Log.e("DBDBDB", "${data}")
@@ -397,7 +430,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     }
                     val thread = Thread(r)
                     thread.start()
-
                 }
             }
             pastFanPower = 0

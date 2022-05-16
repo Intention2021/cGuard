@@ -53,6 +53,8 @@ import com.intention.android.goodmask.*
 import com.intention.android.goodmask.TextUtil
 import com.intention.android.goodmask.activity.BleService
 import com.intention.android.goodmask.activity.SplashActivity
+import com.intention.android.goodmask.db.DeviceDB
+import com.intention.android.goodmask.db.FilterDB
 import com.intention.android.goodmask.issc.Bluebit
 import com.intention.android.goodmask.issc.data.BLEDevice
 import com.intention.android.goodmask.issc.gatt.Gatt
@@ -66,6 +68,7 @@ import com.intention.android.goodmask.issc.impl.LeService.*
 import com.intention.android.goodmask.issc.reliableburst.ReliableBurstData
 import com.intention.android.goodmask.issc.reliableburst.ReliableBurstData.ReliableBurstDataListener
 import com.intention.android.goodmask.issc.util.TransactionQueue
+import com.intention.android.goodmask.model.FilterDateData
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -87,8 +90,11 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
     var addressInfo: String = "서울시 중구 명동"
     lateinit var address: String
     var pastFanPower = 0
+    var today = Calendar.getInstance()
     lateinit var mga : Gatt
     private var db : MaskDB? = null
+    private var fdb: FilterDB? = null
+    private var ddb: DeviceDB? = null
     private var fanPowerResponse = ""
     private var inputData: String = ""
     public var mService: LeService = LeService()
@@ -278,9 +284,21 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         val view = binding.root
         retainInstance = true
         db = MaskDB.getInstance(context?.applicationContext!!)
+        fdb = FilterDB.getInstance(context?.applicationContext!!)
+        ddb = DeviceDB.getInstance(context?.applicationContext!!)
 
         val r = Runnable {
             val data = db?.MaskDao()?.getAll()
+            val fdata = fdb?.FilterDao()?.getAll()
+
+            // 맨 처음 실행될 때 접속한 시간으로 필터 시간 초기화
+            if(fdata!!.size == 0){
+                Log.e("Filter First!!", "filter 첫 실행입니다.")
+                val firstFilter = FilterDateData(System.currentTimeMillis())
+                fdb?.FilterDao()?.insert(firstFilter)
+                val fdd = fdb?.FilterDao()?.getAll()
+                Log.e("Filter insert", "$fdd")
+            }
             // 맨 처음으로 실행할 때 데이터가 없으므로 다 0으로 세팅
             if (data!!.size == 0){
                 Log.e("First!!", "첫 실행입니다.")
@@ -288,9 +306,9 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     val firstDB = MaskData(i.toString(), 0.toLong(), 0.toLong(), 0.toLong(), 0.toLong());
                     db?.MaskDao()?.insert(firstDB)
                 }
-                val data = db?.MaskDao()?.getAll()
-                Log.e("DBDBDB", "${data}")
-                Log.e("DBDBDB", "${data?.size}")
+                val dataa = db?.MaskDao()?.getAll()
+                Log.e("DBDBDB", "$dataa")
+                Log.e("DBDBDB", "${dataa?.size}")
             }
         }
         val thread = Thread(r)
@@ -376,37 +394,47 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         var useTime = 0.toLong()
 
         val rr = Runnable {
-            useTime = db?.MaskDao()?.getTotal()!!
+            val startDate = fdb?.FilterDao()?.getTime()
+            val nowDate = System.currentTimeMillis()
+            Log.e("날짜 차이!!", "${30 - ((nowDate - startDate!!) / (1000 * 60 * 60 * 24))}")
+            useTime = nowDate - startDate!!
         }
         val rrThread = Thread(rr)
         rrThread.start()
-        Log.e("total in Home", useTime.toString())
+        // 필터 교체까지 남은 시간 계산
+        binding.filterDay.text = "D-${30 - (useTime / (1000 * 60 * 60 * 24))}"
 
         // filter 리셋 버튼 클릭 시
         binding.filterResetBtn.setOnClickListener {
             val r = Runnable {
-                db?.MaskDao()?.resetTotal()
-                val data = db?.MaskDao()?.getAll()
-                Log.e("filter reset data", "${data}")
-                Log.e("filter reset data size", "${data?.size}")
+                val firstFilter = FilterDateData(System.currentTimeMillis())
+                fdb?.FilterDao()?.insert(firstFilter)
             }
             val thread = Thread(r)
             thread.start()
-            useTime = 0
             Toast.makeText(context, "필터가 교체되었습니다.", Toast.LENGTH_SHORT).show()
+            // 필터교체까지 남은 날을 ms -> 일로 표현
+            binding.filterDay.text = "D-30"
         }
-        // 필터교체까지 남은 날을 ms -> 일로 표현
-        Log.e("total in Home2", useTime.toString())
-        val lastDay = (60 * 1000 * 60 * 24 * 30 - useTime) / (1000 * 60 * 60 * 24)
-        binding.filterDay.text = "D-$lastDay"
 
-        // 교체를 안한지 한달이 넘으면 주황색 배경으로 바뀜
-        if(lastDay < 0)
-            binding.filterChangeView.setBackgroundResource(R.drawable.rounded_orange_btn)
+        // 연결 해제 버튼 클릭 시
+        binding.disconnectBtn.setOnClickListener {
+            val dr = Runnable {
+                ddb?.DeviceDao()?.deleteDevice(mDevice.toString())
+                val data = ddb?.DeviceDao()?.getAll()
+                Log.e("After Delete", data.toString())
+            }
+            val drThread = Thread(dr)
+            drThread.start()
+            activity.let {
+                val intent = Intent(context, DeviceActivity::class.java)
+                startActivity(intent)
+            }
+        }
 
         maskFanPower_off.setOnClickListener {
             inputData = "N"
-            checkResponse("N")
+            // checkResponse("N")
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -420,10 +448,13 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     val r = Runnable {
                         // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
                         val time = db?.MaskDao()?.getTime(day)
-                        val total = db?.MaskDao()?.getTotal()
+                        var total: Long = 0
+                        for(i in 1..7){
+                            total += db?.MaskDao()?.getTime(i.toString())!!
+                        }
                         // 아래부분은 시간 추가할 때 사하면 될
                         Log.e("Start and End", "$day / $start / $end")
-                        val updateDB = MaskData(day, start, end.toLong(), end - start + time!!, end - start + total!!)
+                        val updateDB = MaskData(day, start, end.toLong(), end - start + time!!, end - start + total)
                         db?.MaskDao()?.update(updateDB)
                         val data = db?.MaskDao()?.getAll()
                         Log.e("DBDBDB", "${data}")
@@ -438,7 +469,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_1.setOnClickListener {
             inputData = "A"
-            checkResponse("A")
+            // checkResponse("A")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -455,7 +486,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_2.setOnClickListener {
             inputData = "B"
-            checkResponse("B")
+            // checkResponse("B")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -472,7 +503,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_3.setOnClickListener {
             inputData = "C"
-            checkResponse("C")
+            // checkResponse("C")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -489,7 +520,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_4.setOnClickListener {
             inputData = "D"
-            checkResponse("D")
+            // checkResponse("D")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))

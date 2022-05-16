@@ -28,7 +28,9 @@ import com.intention.android.goodmask.R
 import com.intention.android.goodmask.adapter.BleListAdapter
 import com.intention.android.goodmask.databinding.ActivityDeviceBinding
 import com.intention.android.goodmask.databinding.ActivityMainBinding
+import com.intention.android.goodmask.db.DeviceDB
 import com.intention.android.goodmask.db.MaskDB
+import com.intention.android.goodmask.model.DeviceData
 import com.intention.android.goodmask.model.MaskData
 import retrofit2.Retrofit
 import java.sql.Timestamp
@@ -39,7 +41,7 @@ class DeviceActivity : AppCompatActivity() {
 
     private var maskDB : MaskDB? = null
     private var maskList = mutableListOf<MaskData>()
-
+    private var ddb: DeviceDB ?= null
     private var deviceConnectivity: Boolean = false
     private var handler = Handler()
     private var deviceID: String = ""
@@ -134,7 +136,7 @@ class DeviceActivity : AppCompatActivity() {
 
         val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(mReceiver, filter)
-
+        ddb = DeviceDB.getInstance(this)
         binding = ActivityDeviceBinding.inflate(layoutInflater)
         setContentView(binding.root)
         var linear = binding.parennnt
@@ -153,6 +155,14 @@ class DeviceActivity : AppCompatActivity() {
                 val intent = Intent(applicationContext, MainActivity::class.java)
                 intent.putExtra("device", device)
                 Toast.makeText(applicationContext, "${device?.name}에 연결합니다.", Toast.LENGTH_LONG).show()
+                // 연결한 기기를 DB에 추가
+                val r = Runnable {
+                    Log.e("New Device", device.toString())
+                    val newDevice = DeviceData(device.toString())
+                    ddb?.DeviceDao()?.insert(newDevice)
+                }
+                val thread = Thread(r)
+                thread.start()
                 startActivity(intent)
                 finish()
             }
@@ -171,7 +181,32 @@ class DeviceActivity : AppCompatActivity() {
         }
         bluetoothAdapter?.startDiscovery()
         scanLeDevice(true)
+        // 기존에 사용했던 기기 탐색, 있으면 그 기기를 mainActivity로 인텐트
+        val r = Runnable {
+            val data = ddb?.DeviceDao()?.getAll()
+            Log.e("저장된 기기들", "$data")
+            Log.e("leDevice", leDeviceListAdapter.items.toString())
+            val cc = ddb?.DeviceDao()?.checkDevice("CC:88:26:B8:8D:B0")
+            val dd = ddb?.DeviceDao()?.findDevice("CC:88:26:B8:8D:B0")
+            Log.e("EE", "$cc / $dd")
+            // 블루투스 연결 가능한 기기들 중 연결한 적 있는 기기들이 있는지 확인
+            for (i in 0 until leDeviceListAdapter.items!!.size){
+                var check = ddb?.DeviceDao()?.findDevice(leDeviceListAdapter.items!![i].toString())
+                Log.e("Check", check.toString())
+                if (leDeviceListAdapter.items!![i].toString() == check){
+                    val intent = Intent(applicationContext, MainActivity::class.java)
+                    intent.putExtra("device", leDeviceListAdapter.items!![i])
+                    runOnUiThread {Toast.makeText(applicationContext, "${leDeviceListAdapter.items!![i].name}에 연결합니다.", Toast.LENGTH_LONG).show()}
+                    Log.e("Existed Device", "Free Pass!")
+                    startActivity(intent)
+                    finish()
+                }
+            }
+        }
+        val thread = Thread(r)
+        thread.start()
 
+        leDeviceListAdapter.items
         load.visibility = View.VISIBLE
         Handler().postDelayed({
             load.visibility = View.GONE

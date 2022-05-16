@@ -189,22 +189,24 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         maskFanPower_4.isEnabled = false
         sensorBtn.isEnabled = false
 
-        var handler = Handler()
-        handler.postDelayed(object : Runnable{
-            override fun run() {
-                while(cnt<=5){
-                    Log.d("cntCall", "cnt : ${cnt}")
-                    write(s)
-                    cnt++
+        for (i in 1..5 ){
+            var handler = Handler()
+            handler.postDelayed(object : Runnable{
+                override fun run() {
+                    while(cnt<=5){
+                        Log.d("cntCall", "cnt : ${cnt}")
+                        write(s)
+                        cnt++
+                    }
+                    cnt = 0
+                    handler.removeCallbacksAndMessages(null)
+
                 }
-                cnt = 0
-                handler.removeCallbacksAndMessages(null)
+            },2000);
+            enableNotification()
+            Thread.sleep(1000)
+        }
 
-            }
-
-
-        },2000);
-        enableNotification()
         maskFanPower_off.isEnabled = true
         maskFanPower_1.isEnabled = true
         maskFanPower_2.isEnabled = true
@@ -434,7 +436,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_off.setOnClickListener {
             inputData = "N"
-            // checkResponse("N")
+             checkResponse("N")
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -469,7 +471,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_1.setOnClickListener {
             inputData = "A"
-            // checkResponse("A")
+             checkResponse("A")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -486,7 +488,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_2.setOnClickListener {
             inputData = "B"
-            // checkResponse("B")
+             checkResponse("B")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_3 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -503,7 +505,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_3.setOnClickListener {
             inputData = "C"
-            // checkResponse("C")
+             checkResponse("C")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
@@ -520,7 +522,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
         maskFanPower_4.setOnClickListener {
             inputData = "D"
-            // checkResponse("D")
+             checkResponse("D")
             (maskFanPower_off as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_2 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))
             (maskFanPower_1 as AppCompatButton).setBackgroundDrawable(ContextCompat.getDrawable(context!!, R.drawable.rounded_gr_btn))

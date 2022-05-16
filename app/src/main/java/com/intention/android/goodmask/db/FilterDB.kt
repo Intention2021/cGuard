@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.intention.android.goodmask.dao.FilterDao
 import com.intention.android.goodmask.model.FilterDateData
 
-@Database(entities = [FilterDateData::class], version = 1)
+@Database(entities = [FilterDateData::class], version = 2)
 abstract class FilterDB: RoomDatabase() {
     abstract fun FilterDao(): FilterDao
 

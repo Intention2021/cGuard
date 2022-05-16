@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.intention.android.goodmask.dao.DeviceDao
 import com.intention.android.goodmask.model.DeviceData
 
-@Database(entities = [DeviceData::class], version = 1)
+@Database(entities = [DeviceData::class], version = 2)
 abstract class DeviceDB : RoomDatabase() {
     abstract fun DeviceDao(): DeviceDao
 

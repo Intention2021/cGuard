@@ -171,6 +171,7 @@ class DeviceActivity : AppCompatActivity() {
         }
         bluetoothAdapter?.startDiscovery()
         scanLeDevice(true)
+
         load.visibility = View.VISIBLE
         Handler().postDelayed({
             load.visibility = View.GONE

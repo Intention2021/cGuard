@@ -186,20 +186,25 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         var handler = Handler()
         handler.postDelayed(object : Runnable{
             override fun run() {
-
-                if (string_value != r){
+                while(cnt<=5){
+                    Log.d("cntCall", "cnt : ${cnt}")
                     write(s)
-                    handler.postDelayed(this, 2000);
-                    maskFanPower_off.isEnabled = true
-                    maskFanPower_1.isEnabled = true
-                    maskFanPower_2.isEnabled = true
-                    maskFanPower_3.isEnabled = true
-                    maskFanPower_4.isEnabled = true
-                    sensorBtn.isEnabled = true
+                    cnt++
                 }
+                cnt = 0
+                handler.removeCallbacksAndMessages(null)
+
             }
 
+
         },2000);
+        enableNotification()
+        maskFanPower_off.isEnabled = true
+        maskFanPower_1.isEnabled = true
+        maskFanPower_2.isEnabled = true
+        maskFanPower_3.isEnabled = true
+        maskFanPower_4.isEnabled = true
+        sensorBtn.isEnabled = true
         Toast.makeText(context, "데이터 전송 완료", Toast.LENGTH_SHORT).show()
     }
 
@@ -211,12 +216,9 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             mService = (service as LocalBinder).service
             mService.addListener(mListener)
             var conn = 0
-            if (mDevice == null){
-                conn = mService.getConnectionState(mService.device)
-            }else{
-                conn = mService.getConnectionState(mDevice)
-            }
-            mService.connectGatt(activity?.applicationContext, false, mService.device)
+            conn = mService.getConnectionState(mDevice)
+
+            mService.connectGatt(activity?.applicationContext, false, mDevice)
             mga = mService.gatt
             if (conn != BluetoothProfile.STATE_DISCONNECTED) {
                 Log.d("connect_info", "DisConnected")
@@ -233,7 +235,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
     }
 
     private fun onDisconnected() {
-        mService.disconnect(mService.device)
+        mService.disconnect(mDevice)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -269,7 +271,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         transmitListener = ReliableBurstDataListener { reliableBurstData, transparentDataWriteChar ->
             }
         transmit!!.setListener(transmitListener)
-//        transmit!!.setBoardId(Bluebit.board_id)
+        transmit!!.setBoardId(Bluebit.board_id)
         val thread2 = HandlerThread("writeThread")
         thread2.start()
         writeThread = Handler(thread2.looper)
@@ -841,8 +843,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
     }
 
     private fun writeToStream(data: ByteArray) {
-        com.intention.android.goodmask.issc.util.Log.d("inside writeToStream mStream:$mStream")
-        //msgShow("recv", data);
         if (mStream != null) {
             try {
                 mStream!!.write(data, 0, data.size)
@@ -924,63 +924,14 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     val dst: ByteArray = ByteArray(size)
                     buf.get(dst, 0, size)
                     Log.d("transaction", "${mTransTx}, ${dst}")
-                    val t: GattTransaction = GattTransaction(mTransTx, dst)
+                    val t: GattTransaction = GattTransaction(mTransRx, dst)
                     mQueue!!.add(t)
                     if (mQueue!!.size() == 1) {
                         mQueue!!.process()
                     }
                 }
-                cnt++
             }
         }
-        if(cnt >= 5){
-            writeThread!!.removeCallbacksAndMessages(null)
-            cnt = 0
-        }
-    }
-
-    private fun onTimerSend(count: Int, size: Int) {
-        /* max is 20 */
-        //String out = String.format("%020d", count);
-        var count = count
-        var out = ""
-        val tempcount = count
-        if (out.length > size) {
-            // if too long
-            out = out.substring(out.length - size)
-        }
-        com.intention.android.goodmask.issc.util.Log.d("count = " + count + "size = " + size)
-        count++
-        while (out.length < (size - 1)) {
-
-            //if (count == 0) count = 1;
-            if (count > 9) count = count % 10
-            val count1 = String.format("%d", count)
-            out = out + count
-        }
-        out = out + "\n"
-        com.intention.android.goodmask.issc.util.Log.d("String$out")
-        //Log.d(out);
-        //out = out + "\n";
-        //Log.d("After newline"+out);
-        FileString = FileString + out
-        com.intention.android.goodmask.issc.util.Log.d("tempcount :$tempcount")
-
-        /*if (tempcount == 99) {
-
-           File path = getApplicationContext().getFilesDir();
-            Log.d("Path: "+path);
-            //File file = new File(path, "my-file-name.txt");
-            try {
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(getApplicationContext().openFileOutput("config.txt", Context.MODE_PRIVATE));
-                outputStreamWriter.write(FileString);
-                outputStreamWriter.close();
-            }
-            catch (IOException e) {
-                Log.e("Exception", "File write failed: " + e.toString());
-            }
-        }*/msgShow("send", out)
-        write(out)
     }
 
     private var mRunning = false
@@ -1007,10 +958,9 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
     }
 
     private fun onConnected() {
-        val list = mService.getServices(mDevice)
+        val list : List<GattService>? = mService.getServices(mDevice)
         Log.d("connected","onConnected")
         if (list == null || list.size == 0) {
-            Log.d("connected","no services, do discovery")
             mService.discoverServices(mDevice)
         } else {
             onDiscovered()
@@ -1061,13 +1011,13 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
     }
 
-    private fun enableTCP() {
-        val gatt: BluetoothGatt? = mService.getGatt().getImpl() as BluetoothGatt?
-        if (gatt != null) {
-            val air_ch = mTransCtrl?.getImpl() as BluetoothGattCharacteristic
-            transmit!!.enableReliableBurstTransmit(gatt, air_ch)
-        }
-    }
+//    private fun enableTCP() {
+//        val gatt: BluetoothGatt? = mService.getGatt().getImpl() as BluetoothGatt?
+//        if (gatt != null) {
+//            val air_ch = mTransCtrl?.getImpl() as BluetoothGattCharacteristic
+//            transmit!!.enableReliableBurstTransmit(gatt, air_ch)
+//        }
+//    }
 
     override fun onTransact(t: GattTransaction) {
         Log.d("Transact","Home transperant ${t}, ${t.isForDescriptor}, , ${String(t.value)}");
@@ -1113,12 +1063,12 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                         }
                     }
                 } else {
-                    if (mService.gatt == null){
-                        mService.mGatt = mga
-                    }
+
+                    Log.d("transaction","t.chr == : ${t.chr}")
                     mService.writeCharacteristic(t.chr)
                 }
             } else {
+                Log.d("transaction","t.chr == read : ${t.chr}")
                 mService.readCharacteristic(t.chr)
             }
         }
@@ -1171,9 +1121,9 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         }
 
         override fun onCharacteristicChanged(gatt: Gatt, chrc: GattCharacteristic) {
+            Log.d("gogogo","onCharacteristicChanged : ${chrc.uuid} ${Bluebit.CHR_ISSC_TRANS_TX}")
             if ((chrc.uuid == Bluebit.CHR_ISSC_TRANS_TX)) {
                 var value = chrc.value
-                string_value = String(chrc.value)
                 Log.d("characteristichange","value : ${String(value)}")
                 total_received_bytes = total_received_bytes + value.size
                 com.intention.android.goodmask.issc.util.Log.d("get value, byte length:" + value.size)
@@ -1276,13 +1226,13 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                 .characteristic.impl as BluetoothGattCharacteristic
             com.intention.android.goodmask.issc.util.Log.d("onDescriptorWrite")
             if (Bluebit.board_id == 70) {
-                if (!enableTCP) {
-                    enableTCP = true
-                    enableTCP()
-                } else {
-                    enableTCP = false
-                    //Log.d("### TEST!");
-                }
+//                if (!enableTCP) {
+//                    enableTCP = true
+//                    enableTCP()
+//                } else {
+//                    enableTCP = false
+//                    //Log.d("### TEST!");
+//                }
             }
             if (status == 5) {
                 reTry = true

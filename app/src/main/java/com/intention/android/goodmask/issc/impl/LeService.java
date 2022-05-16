@@ -259,7 +259,6 @@ public class LeService extends Service {
     public int getConnectionState(BluetoothDevice device) {
         Log.d("LeService", mGattAdapter+"is null");
         this.device = device;
-        mGattAdapter = new AospGattAdapter(this, mCallback);
         return mGattAdapter.getConnectionState(device);
     }
 

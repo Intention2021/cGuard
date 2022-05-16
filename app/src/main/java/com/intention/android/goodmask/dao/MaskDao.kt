@@ -18,14 +18,8 @@ interface MaskDao {
     @Update
     fun update(maskData: MaskData)
 
-    @Query(value = "SELECT time FROM mask WHERE day = :day")
+    @Query("SELECT time FROM mask WHERE day = :day")
     fun getTime(day: String): Long
-
-    @Query(value = "SELECT total FROM mask")
-    fun getTotal(): Long
-
-    @Query(value = "UPDATE mask SET total = 0")
-    fun resetTotal()
 
     @Query("DELETE from mask")
     fun deleteAll()

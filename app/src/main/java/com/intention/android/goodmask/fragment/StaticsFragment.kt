@@ -91,10 +91,11 @@ class StaticsFragment : Fragment() {
     // 주간 사용량, 총 사용량
     private fun getWeeklyTime(db: MaskDB) {
         // 일 ~ 토 순
-        val totalTime:Long = db.MaskDao().getTotal()
+        var totalTime: Long = 0
         val r = Runnable {
             for (i in 1..7) {
                 timeByDay[i - 1] = db.MaskDao().getTime(i.toString())
+                totalTime += timeByDay[i - 1]
             }
             // 총 시간을 밀리초에서 분으로 변환
             totalTimeMin = totalTime / (1000 * 60)

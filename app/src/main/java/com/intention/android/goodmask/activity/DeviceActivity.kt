@@ -64,7 +64,7 @@ class DeviceActivity : AppCompatActivity() {
                         break
                     }
                 }
-                if(!existence)leDeviceListAdapter.addDevice(device)
+                if(!existence && device?.name != "BM64_DSPK v2.1.2_GATT")leDeviceListAdapter.addDevice(device)
                 leDeviceListAdapter.notifyDataSetChanged()
                 Log.d("hihi","${device?.name}")
             }
@@ -209,7 +209,7 @@ class DeviceActivity : AppCompatActivity() {
 
 
 
-                if(existence) {
+                if(existence && device.name != "BM64_DSPK v2.1.2_GATT") {
                     leDeviceListAdapter.addDevice(device)
                     leDeviceListAdapter.notifyDataSetChanged()
                 }

@@ -107,6 +107,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
     var FileString = ""
     var countx = 0
+    private var cnt = 0
 
     private var mMsg: TextView? = null
     private var mToggleResponse: ToggleButton? = null
@@ -147,7 +148,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
     private var reTry = false
     private var enableTCP = false
 
-
     fun checkResponse(p : String){
         when(p) {
             "N" -> {
@@ -186,9 +186,10 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         var handler = Handler()
         handler.postDelayed(object : Runnable{
             override fun run() {
+
                 if (string_value != r){
                     write(s)
-                    handler.postDelayed(this, 200);
+                    handler.postDelayed(this, 2000);
                     maskFanPower_off.isEnabled = true
                     maskFanPower_1.isEnabled = true
                     maskFanPower_2.isEnabled = true
@@ -201,7 +202,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         },2000);
         Toast.makeText(context, "데이터 전송 완료", Toast.LENGTH_SHORT).show()
     }
-
 
     inner class SrvConnection : ServiceConnection {
         override fun onServiceConnected(
@@ -361,15 +361,14 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         var day = ""
 
         sensorBtn.setOnClickListener {
-            if(sensorBtn.text == "ON"){
+            if (sensorBtn.text == "ON") {
                 sensorBtn.text = "OFF"
                 checkResponse("U")
-            }else {
+            } else {
                 sensorBtn.text = "ON"
                 checkResponse("I")
             }
         }
-        checkResponse("N")
 
         maskFanPower_off.setOnClickListener {
             inputData = "N"
@@ -470,89 +469,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             }
             pastFanPower = 4
         }
-
-//        maskFanPower.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-//            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-//                maskFanPowerText.text = "팬 세기\n${p1}"
-//                when(p1){
-//                    0 -> {
-//                        // fan stop
-//
-//                        if(pastFanPower != 0){
-//                            // 팬 작동 종료
-//                            if (pastFanPower != 0){
-//                                end = System.currentTimeMillis()
-//                                val r = Runnable {
-//                                    // update use time (100 부분이 새로 추가될 시간, time은 지금까지 누적된 시간)
-//                                    val time = db?.MaskDao()?.getTime(day)
-//                                    // 아래부분은 시간 추가할 때 사하면 될
-//                                    Log.e("Start and End", "$day / $start / $end")
-//                                    val updateDB = MaskData(day, start, end.toLong(), end - start + time!!);
-//                                    db?.MaskDao()?.update(updateDB)
-//                                    val data = db?.MaskDao()?.getAll()
-//                                    Log.e("DBDBDB", "${data}")
-//                                    Log.e("DBDBDB", "${data?.size}")
-//                                }
-//                                val thread = Thread(r)
-//                                thread.start()
-//
-//                            }
-//                        }
-//                        checkResponse("N")
-//                        inputData = "N"
-//                    }
-//                    1 -> {
-//                        // fan start
-//                        // 팬 작동 시작
-//                        if (pastFanPower == 0){
-//                            start = System.currentTimeMillis()
-//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-//
-//                        }
-//                        checkResponse("A")
-//                        inputData = "A"
-//                    }
-//                    2 -> {
-//                        // fan start
-//                        if (pastFanPower == 0){
-//                            start = System.currentTimeMillis()
-//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-//                        }
-//                        checkResponse("B")
-//                        inputData = "B"
-//                    }
-//                    3 -> {
-//                        // fan start
-//                        if (pastFanPower == 0){
-//                            start = System.currentTimeMillis()
-//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-//                        }
-//                        checkResponse("C")
-//                        inputData = "C"
-//                    }
-//                    4 -> {
-//                        // fan start
-//                        if (pastFanPower == 0){
-//                            start = System.currentTimeMillis()
-//                            day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-//                        }
-//                        checkResponse("D")
-//                        inputData = "D"
-//                    }
-//
-//                }
-//                pastFanPower = p1
-//            }
-//
-//            override fun onStartTrackingTouch(p0: SeekBar?) {
-//            }
-//            override fun onStopTrackingTouch(p0: SeekBar?) {
-//            }
-//
-//        })
-
-//        initObserver(binding)
-//        registerChooser()
 
         return view
     }
@@ -680,38 +596,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 //        }
 //        Thread.sleep(3000)
 //    }
-    private fun checkIO(inputData: Char){
-        Log.d("read/write/log", "Read End fanpowerresponse : ${fanPowerResponse}, inputData : ${inputData}")
-        when(inputData){
-            'N' -> if(fanPowerResponse == "Q"){
-                Toast.makeText(context, "팬세기 데이터 송/수신 : Q OK", Toast.LENGTH_SHORT).show()
-                fanPowerResponse = ""
-                return
-            }
-
-            'A' ->if(fanPowerResponse == "W"){
-                Toast.makeText(context, "팬세기 데이터 송/수신 : W OK", Toast.LENGTH_SHORT).show()
-                fanPowerResponse = ""
-                return
-            }
-            'B' ->if(fanPowerResponse == "E"){
-                Toast.makeText(context, "팬세기 데이터 송/수신 : E OK", Toast.LENGTH_SHORT).show()
-                fanPowerResponse = ""
-                return
-            }
-            'C' ->if(fanPowerResponse == "R"){
-                Toast.makeText(context, "팬세기 데이터 송/수신 : R OK", Toast.LENGTH_SHORT).show()
-                fanPowerResponse = ""
-                return
-            }
-            'D' ->if(fanPowerResponse == "T"){
-                Toast.makeText(context, "팬세기 데이터 송/수신 : T OK", Toast.LENGTH_SHORT).show()
-                fanPowerResponse = ""
-                return
-            }
-        }
-        Toast.makeText(context, "데이터가 수신되지 않습니다.", Toast.LENGTH_SHORT).show()
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun dataToService(status: String){
@@ -854,6 +738,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                     }
                 }
                 writeThread!!.postDelayed(runnable, 3000)
+
                 mTempStartTime = mStartTime
                 mStartTime = null
                 throughput_update = false
@@ -904,8 +789,8 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             dsc,
             dsc?.getConstantBytes(GattDescriptor.DISABLE_NOTIFICATION_VALUE)
         )
-        // mQueue.add(transaction);
-        // mQueue.process();
+         mQueue?.add(transaction)
+         mQueue?.process()
         val success: Boolean = mService.writeDescriptor(dsc)
     }
 
@@ -985,7 +870,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
      * Write data to remote device.
      */
     private fun write(bytes: ByteArray) {
-        com.intention.android.goodmask.issc.util.Log.d(" write before writeThread.post")
         writeThread!!.post {
             synchronized((mQueue)!!) {
                 val buf: ByteBuffer = ByteBuffer.allocate(bytes.size)
@@ -1014,7 +898,12 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
                         mQueue!!.process()
                     }
                 }
+                cnt++
             }
+        }
+        if(cnt >= 5){
+            writeThread!!.removeCallbacksAndMessages(null)
+            cnt = 0
         }
     }
 
@@ -1163,7 +1052,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             )
         } else {
             //Log.d("onTransact t.isForDescriptor() false");
-            Log.d("transact", "t.chr.value = ${t.chr}, ${t.desc}, ${t.value}")
+            Log.d("transact", "t.chr.value = ${t.chr.value}, ${t.desc}, ${t.value}")
             t.chr.value = t.value
             //Log.d("Value : " + t.value);
             val str1 = String(t.value)

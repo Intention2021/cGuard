@@ -196,6 +196,7 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
 
             }
 
+
         },2000);
         enableNotification()
         maskFanPower_off.isEnabled = true

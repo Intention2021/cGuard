@@ -498,7 +498,6 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
             if (pastFanPower == 0){
                 start = System.currentTimeMillis()
                 day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).toString()
-
             }
             pastFanPower = 2
         }

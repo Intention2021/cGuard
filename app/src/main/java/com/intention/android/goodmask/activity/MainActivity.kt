@@ -128,6 +128,12 @@ class MainActivity : AppCompatActivity() {
                     val addressListLength = addressList.size - 1
                     addressInfo = "${addressList[addressListLength - 2]} ${addressList[addressListLength - 1]} ${addressList[addressListLength]}"
                     Log.d("Test", addressInfo)
+
+                    // static fragment에 location 전달
+                    val bundle = Bundle()
+                    bundle.putString("address", addressInfo)
+                    staticsFragment.arguments = bundle
+
                     dataToFragHome(latitude, longtitude, addressInfo)
                     replaceFragment(homeFragment)
                 }

@@ -21,7 +21,9 @@ import com.github.mikephil.charting.interfaces.datasets.IBarDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.intention.android.goodmask.R
 import com.intention.android.goodmask.databinding.FragStaticsBinding
+import com.intention.android.goodmask.db.LocationDB
 import com.intention.android.goodmask.db.MaskDB
+import com.intention.android.goodmask.model.LocationData
 import com.intention.android.goodmask.util.CustomMarkerView
 import kotlinx.coroutines.flow.asFlow
 import java.util.*
@@ -38,7 +40,7 @@ class StaticsFragment : Fragment() {
     private var dayUseTime: Int = 0
     private var weekUseTime: Int = 0
     private var monthUseTime: Int = 0
-
+    private var ldb: LocationDB ?= null
     private var db: MaskDB? = null
     private var dayTime: Long = 0
     private var timeByDay = longArrayOf(0, 0, 0, 0, 0, 0, 0)
@@ -61,6 +63,19 @@ class StaticsFragment : Fragment() {
         var uChart: BarChart = binding.usageChart
 
         makeChart(uChart, view)
+
+        // 위치정보를 main Activity에서 가져와서 저장
+        val address = arguments?.getString("address").toString()
+        Log.e("Static Fragment로 가져온 주소", address)
+        ldb = LocationDB.getInstance(context?.applicationContext!!)
+        val r = Runnable {
+            val locationData = LocationData(address)
+            ldb?.LocationDao()?.insert(locationData)
+            val data = ldb?.LocationDao()?.getAll()
+            Log.e("Static Location DB", data.toString())
+        }
+        val thread = Thread(r)
+        thread.start()
 
         db = MaskDB.getInstance(context?.applicationContext!!)
         getDailyTime(db!!)

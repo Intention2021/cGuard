@@ -189,22 +189,22 @@ class HomeFragment : Fragment(), TransactionQueue.Consumer<GattTransaction> {
         maskFanPower_4.isEnabled = false
         sensorBtn.isEnabled = false
 
-        for (i in 1..5 ){
+        for (i in 1..7 ){
             var handler = Handler()
             handler.postDelayed(object : Runnable{
                 override fun run() {
-                    while(cnt<=5){
+                    while(cnt<=3){
                         Log.d("cntCall", "cnt : ${cnt}")
                         write(s)
                         cnt++
+                        Thread.sleep(20)
+                        enableNotification()
                     }
                     cnt = 0
                     handler.removeCallbacksAndMessages(null)
 
                 }
-            },2000);
-            enableNotification()
-            Thread.sleep(1000)
+            },100);
         }
 
         maskFanPower_off.isEnabled = true

@@ -1,4 +1,4 @@
-# GoodMask
+# 크리니얼가드
 
 <h2> 인트로 화면 </h2>
 <figure>
